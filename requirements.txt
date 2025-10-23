@@ -1,0 +1,17 @@
+# Bibliotecas Essenciais para Ciência de Dados
+pandas
+numpy
+scikit-learn
+matplotlib
+plotly
+jupyter
+
+# Bibliotecas Geoespaciais (O DIFERENCIAL do projeto)
+geopandas
+rasterio
+fiona
+pyproj
+shapely
+
+# Bibliotecas de Apoio e Desenvolvimento
+tqdm
