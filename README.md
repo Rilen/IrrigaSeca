@@ -47,7 +47,7 @@ O modelo final busca uma alta acurácia na identificação de áreas vulnerávei
 
 1.  **Clonar o Repositório:**
     ```bash
-    git clone [https://github.com/rilen/IrrigaSeca.git](https://github.com/rilen/IrrigaSeca.git)
+    git clone https://github.com/rilen/IrrigaSeca.git
     cd IrrigaSeca
     ```
 2.  **Instalar Dependências:**
