@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard IrrigaSeca - Filtro de Período e Gráfico de Barras</title>
+  <title>Dashboard IrrigaSeca - Relé Coletivo por Horta</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; max-width: 900px; }
@@ -16,6 +16,12 @@
       padding: 12px;
       margin-bottom: 20px;
       box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+    }
+    #statusReleContainer {
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 1.1em;
+      text-align: center;
     }
     #mapaRele {
       margin-top: 40px;
@@ -39,9 +45,13 @@
   </style>
 </head>
 <body>
-  <h2>Dashboard Monitoramento: Filtro e Visualização</h2>
+  <h2>Dashboard Monitoramento: Relé Único por Horta</h2>
 
   <div id="configRele"></div>
+
+  <div id="statusReleContainer">
+    <span id="statusReleA"></span> | <span id="statusReleB"></span>
+  </div>
 
   <label for="periodSelect">Selecione o período:</label>
   <select id="periodSelect">
@@ -80,6 +90,7 @@
   let chartA, chartB;
   let dataA = null;
   let dataB = null;
+  let configRele = null;
 
   function parseDateTime(str) {
     const parts = str.split(/[- :]/);
@@ -150,10 +161,10 @@
 
   async function fetchReleConfig() {
     const resp = await fetch(releConfigUrl);
-    const cfg = await resp.json();
+    configRele = await resp.json();
     document.getElementById('configRele').innerHTML =
-      `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>` +
-      `Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`;
+      `Configuração Relê: Ativa <b>abaixo de ${configRele.umidade_ativacao}%</b> de umidade.<br>` +
+      `Relê permanece acionado por <b>${configRele.tempo_aberto_segundos} segundos</b>.`;
   }
 
   async function fetchMapaRele() {
@@ -172,7 +183,7 @@
 
   function getCurrentDateTimeLocal() {
     const dt = new Date();
-    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); // Ajustar para timezone local
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
     return dt.toISOString().slice(0,16);
   }
 
@@ -214,6 +225,15 @@
     }
   }
 
+  function calcularStatusRele(entries) {
+    if(!configRele) return 'Configuração do relé não carregada';
+    if(!entries || entries.length === 0) return 'Sem dados';
+    const limiar = configRele.umidade_ativacao;
+    const ultimaLeitura = entries[entries.length - 1];
+    const reléAtivado = ultimaLeitura.valores.some(v => v < limiar);
+    return reléAtivado ? 'Ligado' : 'Desligado';
+  }
+
   async function updateCharts() {
     if(!dataA || !dataB) return;
     const period = document.getElementById('periodSelect').value;
@@ -243,6 +263,9 @@
 
     desenharGraficoBarra('hortaAChart', labelsA, datasetsA, sensoresA);
     desenharGraficoBarra('hortaBChart', labelsB, datasetsB, sensoresB);
+
+    document.getElementById('statusReleA').innerText = `Relé Horta A: ${calcularStatusRele(filteredA)}`;
+    document.getElementById('statusReleB').innerText = `Relé Horta B: ${calcularStatusRele(filteredB)}`;
   }
 
   // Inicialização
