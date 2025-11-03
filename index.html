@@ -1,8 +1,81 @@
-<a href="https://github.com/rilen/IrrigaSeca" target="_blank" class="image filtered span-1-5" data-position="bottom">
-    <img src="images/gallery/thumbs/irrigaseca.png" alt="Miniatura do Projeto Preditivo de Estresse Hídrico" />
-    <span class="caption">
-        <span class="title">Análise de Estresse Hídrico (Agro/ML)</span>
-        <p>Previsão de áreas de risco de seca utilizando índices NDVI e dados climáticos para otimizar irrigação. Stack: Geopandas, Scikit-learn.</p>
-        <i class="icon brands fa-github"></i> Ver Repositório
-    </span>
-</a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>IrrigaSeca Dashboard - Umidade</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:40px; }
+    #grafico { max-width:700px; margin: auto; }
+    .tendencia { text-align:center; margin:20px; font-size:18px;}
+  </style>
+</head>
+<body>
+  <h2>Gráfico de Umidade do Solo</h2>
+  <div id="grafico">
+    <canvas id="umidadeChart"></canvas>
+  </div>
+  <div class="tendencia" id="tendenciaStatus"></div>
+  <script>
+    // URL do arquivo log no GitHub bruto
+    const logUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/sensor_umidade_01.log';
+
+    async function fetchLogData() {
+      const resp = await fetch(logUrl);
+      const text = await resp.text();
+      const linhas = text.trim().split('\n');
+      const labels = [];
+      const valores = [];
+      linhas.forEach(linha => {
+        const partes = linha.split(';');
+        // Pega só linhas que têm valor de umidade numérica
+        if (partes[1] && !isNaN(parseFloat(partes[1]))) {
+          labels.push(partes[0]);
+          valores.push(parseFloat(partes[1]));
+        }
+      });
+      return { labels, valores };
+    }
+
+    function verificarTendencia(valores) {
+      if (valores.length < 2) return "Tendência indefinida";
+      const ultimos = valores.slice(-5); // tendencia dos últimos 5 pontos
+      const diff = ultimos[ultimos.length-1] - ultimos[0];
+      if (diff > 0) return "Tendência: Crescimento (aumento da umidade)";
+      if (diff < 0) return "Tendência: Queda (redução da umidade)";
+      return "Tendência: Estável";
+    }
+
+    async function desenharGrafico() {
+      const { labels, valores } = await fetchLogData();
+      const ctx = document.getElementById('umidadeChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Umidade (%)',
+            data: valores,
+            fill: false,
+            borderColor: 'blue',
+            tension: 0.2,
+            pointRadius: 3,
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display:true, text:'Data/Hora' } },
+            y: { min:0, max:100, title:{display:true, text:'Umidade (%)'} }
+          },
+          plugins: {
+            legend: { display:false }
+          }
+        }
+      });
+      document.getElementById('tendenciaStatus').innerText = verificarTendencia(valores);
+    }
+
+    desenharGrafico();
+  </script>
+</body>
+</html>
