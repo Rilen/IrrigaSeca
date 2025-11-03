@@ -100,5 +100,23 @@
 
     initDashboard();
   </script>
+  <div id="mapaRele"></div>
+<script>
+  async function fetchMapaRele() {
+    const resp = await fetch('https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/mapa_rele.json');
+    const mapa = await resp.json();
+    let html = '<h3>Mapeamento Sensores &rarr; Relés</h3><table border="1" cellpadding="5" style="border-collapse:collapse;">';
+    html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
+    Object.entries(mapa).forEach(([horta, sensores]) => {
+      Object.entries(sensores).forEach(([sensor, rele]) => {
+        html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
+      });
+    });
+    html += '</table>';
+    document.getElementById('mapaRele').innerHTML = html;
+  }
+  fetchMapaRele();
+</script>
+
 </body>
 </html>

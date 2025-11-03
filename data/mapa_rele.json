@@ -1,0 +1,22 @@
+{
+  "hortaA": {
+    "S1": "RELE_A1",
+    "S2": "RELE_A2",
+    "S3": "RELE_A3",
+    "S4": "RELE_A4",
+    "S5": "RELE_A5",
+    "S6": "RELE_A6",
+    "S7": "RELE_A7",
+    "S8": "RELE_A8"
+  },
+  "hortaB": {
+    "S9": "RELE_B1",
+    "S10": "RELE_B2",
+    "S11": "RELE_B3",
+    "S12": "RELE_B4",
+    "S13": "RELE_B5",
+    "S14": "RELE_B6",
+    "S15": "RELE_B7",
+    "S16": "RELE_B8"
+  }
+}
