@@ -22,6 +22,9 @@
     .grafico-titulo {
       margin-bottom: 8px;
     }
+    .menu-periodo {
+      width: 200px; margin: 10px auto 25px auto; display:block;
+    }
     canvas {
       width: 70vw !important;
       max-width: 70vw !important;
@@ -39,6 +42,15 @@
 <body>
 <div id="container">
   <h2>Monitoramento de Umidade por Fileira<br />Irrigação Automática • Sensor único a 20cm</h2>
+  <label for="periodo" class="menu-periodo">Exibir período:
+    <select id="periodo" class="menu-periodo">
+      <option value="24h">Últimas 24h</option>
+      <option value="7d">1 semana</option>
+      <option value="15d">15 dias</option>
+      <option value="1m">1 mês</option>
+      <option value="all">Todos</option>
+    </select>
+  </label>
   <div id="graficos"></div>
 </div>
 <script>
@@ -52,7 +64,8 @@ const urls = fileiras.map(f =>
 async function fetchFileiraLog(url) {
   const resp = await fetch(url);
   const text = await resp.text();
-  const linhas = text.trim().split('\n');
+  const linhas = text.trim().split('
+');
   const labels = [], umidade = [], eventos = [];
   linhas.forEach((linha, i) => {
     const partes = linha.split(';');
@@ -63,6 +76,15 @@ async function fetchFileiraLog(url) {
     }
   });
   return { labels, umidade, eventos };
+}
+
+function getPeriodIndices(labels, period) {
+  const total = labels.length;
+  if(period==='24h') return [Math.max(0,total-24), total];
+  if(period==='7d') return [Math.max(0,total-24*7), total];
+  if(period==='15d') return [Math.max(0,total-24*15), total];
+  if(period==='1m') return [Math.max(0,total-24*30), total];
+  return [0,total];
 }
 
 function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
@@ -116,23 +138,38 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
   });
 }
 
-async function main() {
+let fileiraCache = {};
+
+async function desenhaGraficos(periodo) {
   const container = document.getElementById('graficos');
+  container.innerHTML = '';
   for(let i=0; i<fileiras.length; i++) {
-    const data = await fetchFileiraLog(urls[i]);
+    let data = fileiraCache[fileiras[i]];
+    if(!data) {
+      data = await fetchFileiraLog(urls[i]);
+      fileiraCache[fileiras[i]] = data;
+    }
+    let [ini, fim] = getPeriodIndices(data.labels, periodo);
+    const labelsRecorte = data.labels.slice(ini,fim);
+    const umidadeRecorte = data.umidade.slice(ini,fim);
+    // ajustar indices dos eventos ao novo intervalo
+    const eventosRecorte = data.eventos.filter(ev => ev.x >= ini && ev.x < fim).map(ev => ({x: ev.x-ini, status: ev.status}));
     const titulo = `Fileira ${String.fromCharCode(65+i)} (Sensor 20cm)`;
     const canvasId = `canvas_${fileiras[i]}`;
     const div = document.createElement('div');
     div.className = 'graficos-fileira';
-    // Importante: canvas traz atributo height fixo para garantir altura no Chart.js
     div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
-                     <canvas id="${canvasId}" height="400"></canvas>`;
+<canvas id="${canvasId}" height="400"></canvas>`;
     container.appendChild(div);
-    plotFileira(canvasId, titulo, cores[i], data.labels, data.umidade, data.eventos);
+    plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
   }
 }
 
-main();
+document.getElementById('periodo').addEventListener('change', function(e){
+  desenhaGraficos(e.target.value);
+});
+
+desenhaGraficos('24h');
 </script>
 </body>
 </html>
