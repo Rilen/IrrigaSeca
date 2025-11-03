@@ -56,29 +56,56 @@
 <script>
 const fileiras = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
 const cores = ['blue','red','green','orange'];
+// NOTA: As URLs originais apontam para o GitHub. Se estiver rodando localmente,
+// você deve alterar isso para caminhos relativos, por exemplo: `./fileiraA.log`
 const urls = fileiras.map(f => 
   `https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/${f}.log`
 );
 
-// Busca o log e retorna { labels, umidade, eventos }
+// CORREÇÃO: Função para buscar e processar logs
 async function fetchFileiraLog(url) {
-  const resp = await fetch(url);
-  const text = await resp.text();
-  const linhas = text.trim().split('
-');
-  const labels = [], umidade = [], eventos = [];
-  linhas.forEach((linha, i) => {
-    const partes = linha.split(';');
-    if (partes.length >= 2) {
-      labels.push(partes[0].trim());
-      umidade.push(parseFloat(partes[1]));
-      if (partes[2]) eventos.push({ x: i, status: partes[2].trim() });
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+        console.error(`Falha ao carregar log de ${url}: ${resp.status} - Verifique se a URL está correta ou use um servidor web.`);
+        return { labels: [], umidade: [], eventos: [] };
     }
-  });
-  return { labels, umidade, eventos };
+    const text = await resp.text();
+    // Corrigindo o split() para usar o caractere de nova linha padrão.
+    const linhas = text.trim().split('\n');
+    const labels = [], umidade = [], eventos = [];
+    
+    linhas.forEach((linha, i) => {
+      // CORREÇÃO: Remove o prefixo de citação "" que estava nos logs fornecidos
+      const cleanLine = linha.replace(/\\s*/, '').trim(); 
+      if (cleanLine.length === 0) return; // Ignora linhas vazias
+
+      const partes = cleanLine.split(';');
+      
+      // logs fileiraX.log tem pelo menos Data/Hora e Umidade
+      if (partes.length >= 2) {
+        // Usa a data/hora limpa para os rótulos (Chart.js fará o parsing da data/hora string)
+        labels.push(partes[0].trim()); 
+        
+        // Garante que a umidade é um número (ou null se não for)
+        const umidadeVal = parseFloat(partes[1]);
+        umidade.push(isNaN(umidadeVal) ? null : umidadeVal);
+
+        // Se houver status (terceira coluna)
+        if (partes.length >= 3 && partes[2]) {
+          eventos.push({ x: i, status: partes[2].trim() });
+        }
+      }
+    });
+    return { labels, umidade, eventos };
+  } catch (e) {
+    console.error("Erro durante o fetch ou parsing do log:", e);
+    return { labels: [], umidade: [], eventos: [] };
+  }
 }
 
 function getPeriodIndices(labels, period) {
+  // CORREÇÃO Lógica de fatiamento: Assume-se que há uma entrada por hora (ex: 24 entradas = 24h)
   const total = labels.length;
   if(period==='24h') return [Math.max(0,total-24), total];
   if(period==='7d') return [Math.max(0,total-24*7), total];
@@ -89,16 +116,34 @@ function getPeriodIndices(labels, period) {
 
 function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
   const ctx = document.getElementById(canvasId).getContext('2d');
-  const eventData_ON = eventos.filter(e=>e.status==='RELE_ON').map(e=>({x: e.x, y: umidade[e.x]}));
-  const eventData_OFF = eventos.filter(e=>e.status==='RELE_OFF').map(e=>({x: e.x, y: umidade[e.x]}));
+  
+  // Mapeia eventos para os pontos correspondentes nos dados de umidade
+  const eventData_ON = eventos.filter(e => e.status === 'RELE_ON').map(e => ({ x: labels[e.x], y: umidade[e.x] }));
+  const eventData_OFF = eventos.filter(e => e.status === 'RELE_OFF').map(e => ({ x: labels[e.x], y: umidade[e.x] }));
+
+  // O Chart.js precisa de rótulos únicos para o eixo X, e se for do tipo 'linear'
+  // ou 'time', o 'data' precisa ser {x: valor_do_label, y: valor_da_umidade}.
+  // Como o código original usava o índice 'i' e o Chart.js está configurado
+  // para 'categorical' (implícito), vamos usar um array simples de umidade
+  // e o array de labels (strings) para o eixo X.
+  
+  // Para exibir as marcações de tempo corretamente e suportar o scatter,
+  // é melhor usar o formato {x: date, y: value} para a linha de umidade também.
+  
+  const umidadePlotData = labels.map((l, i) => ({ x: l, y: umidade[i] }));
+  
+  // CORREÇÃO: Destroi o gráfico existente para evitar sobreposição (se houver)
+  const existingChart = Chart.getChart(canvasId);
+  if (existingChart) existingChart.destroy();
+  
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
+      labels: labels, // Usaremos os rótulos de tempo como rótulos categóricos no eixo X
       datasets: [
         {
           label: 'Umidade (%)',
-          data: umidade,
+          data: umidadePlotData, // Passa os dados como {x, y} para manter a relação com o label
           borderColor: cor,
           backgroundColor: cor,
           pointRadius: 2,
@@ -131,8 +176,25 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { title: { display: true, text: 'Data/Hora' }, ticks: { maxRotation: 60, minRotation: 45, maxTicksLimit: 12 } },
-        y: { min: 0, max: 40, title: { display: true, text: 'Umidade (%)' } }
+        x: { 
+            // CORREÇÃO: Usar um tipo 'category' para strings de data/hora não formatadas
+            type: 'category', 
+            title: { display: true, text: 'Data/Hora' }, 
+            ticks: { 
+                maxRotation: 60, 
+                minRotation: 45, 
+                maxTicksLimit: 12,
+                // Mostra a cada 4 ticks para evitar aglomeração
+                callback: function(value, index, values) {
+                    return index % 4 === 0 ? value : ''; 
+                }
+            } 
+        },
+        y: { 
+            beginAtZero: true, 
+            max: 40, // Mantido o max de 40%
+            title: { display: true, text: 'Umidade (%)' } 
+        }
       }
     }
   });
@@ -142,18 +204,54 @@ let fileiraCache = {};
 
 async function desenhaGraficos(periodo) {
   const container = document.getElementById('graficos');
-  container.innerHTML = '';
+  container.innerHTML = 'Carregando dados...'; // Feedback de carregamento
+  
+  // Destruir gráficos existentes antes de desenhar novos
+  fileiras.forEach(f => {
+    const existingChart = Chart.getChart(`canvas_${f}`);
+    if (existingChart) existingChart.destroy();
+  });
+
+  // Carrega e armazena os dados, se ainda não estiverem em cache
   for(let i=0; i<fileiras.length; i++) {
-    let data = fileiraCache[fileiras[i]];
-    if(!data) {
-      data = await fetchFileiraLog(urls[i]);
-      fileiraCache[fileiras[i]] = data;
+    if(!fileiraCache[fileiras[i]] || periodo === 'all') { // Recarregar para 'all' ou se não estiver em cache
+      try {
+        fileiraCache[fileiras[i]] = await fetchFileiraLog(urls[i]);
+      } catch (e) {
+        console.error(`Falha ao carregar dados da ${fileiras[i]}`);
+        fileiraCache[fileiras[i]] = { labels: [], umidade: [], eventos: [] };
+      }
     }
+  }
+  
+  // Se todos os dados falharam, avisa o usuário
+  if (Object.values(fileiraCache).every(d => d.labels.length === 0)) {
+     container.innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados de nenhuma fileira. Verifique os caminhos dos arquivos ou a conexão com a internet.</p>';
+     return;
+  }
+  
+  container.innerHTML = ''; // Limpa a mensagem de carregamento para desenhar os gráficos
+
+  // Desenha os gráficos com os dados filtrados
+  for(let i=0; i<fileiras.length; i++) {
+    const data = fileiraCache[fileiras[i]];
+    if(data.labels.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'graficos-fileira';
+        div.innerHTML = `<div class="grafico-titulo"><b>Fileira ${String.fromCharCode(65+i)} (Sensor 20cm)</b></div><p style="color: orange; text-align: center;">Sem dados para exibir.</p>`;
+        container.appendChild(div);
+        continue;
+    }
+    
+    // Filtra os dados de acordo com o período, baseado no índice (assumindo entradas horárias)
     let [ini, fim] = getPeriodIndices(data.labels, periodo);
-    const labelsRecorte = data.labels.slice(ini,fim);
-    const umidadeRecorte = data.umidade.slice(ini,fim);
-    // ajustar indices dos eventos ao novo intervalo
-    const eventosRecorte = data.eventos.filter(ev => ev.x >= ini && ev.x < fim).map(ev => ({x: ev.x-ini, status: ev.status}));
+    
+    const labelsRecorte = data.labels.slice(ini, fim);
+    const umidadeRecorte = data.umidade.slice(ini, fim);
+    
+    // Ajustar os índices dos eventos ao novo intervalo
+    const eventosRecorte = data.eventos.filter(ev => ev.x >= ini && ev.x < fim).map(ev => ({x: labelsRecorte[ev.x - ini], status: ev.status}));
+    
     const titulo = `Fileira ${String.fromCharCode(65+i)} (Sensor 20cm)`;
     const canvasId = `canvas_${fileiras[i]}`;
     const div = document.createElement('div');
@@ -161,14 +259,20 @@ async function desenhaGraficos(periodo) {
     div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
 <canvas id="${canvasId}" height="400"></canvas>`;
     container.appendChild(div);
+    
     plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
   }
 }
 
 document.getElementById('periodo').addEventListener('change', function(e){
+  // CORREÇÃO: Limpar o cache se o período for 'all' para recarregar todos os dados
+  if (e.target.value === 'all') {
+      fileiraCache = {};
+  }
   desenhaGraficos(e.target.value);
 });
 
+// Inicia o desenho dos gráficos
 desenhaGraficos('24h');
 </script>
 </body>
