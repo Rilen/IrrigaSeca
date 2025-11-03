@@ -2,80 +2,103 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>IrrigaSeca Dashboard - Umidade</title>
+  <title>Dashboard IrrigaSeca</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin:40px; }
-    #grafico { max-width:700px; margin: auto; }
-    .tendencia { text-align:center; margin:20px; font-size:18px;}
+    .dashboard-block { margin-bottom: 40px; }
+    .titulo-horta { margin-bottom:8px; }
+    .feedback-config { background: #f3f3f3; border:1px solid #ddd; border-radius:8px; margin-bottom:18px; padding:8px 12px;}
   </style>
 </head>
 <body>
-  <h2>Gráfico de Umidade do Solo</h2>
-  <div id="grafico">
-    <canvas id="umidadeChart"></canvas>
-  </div>
-  <div class="tendencia" id="tendenciaStatus"></div>
-  <script>
-    // URL do arquivo log no GitHub bruto
-    const logUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/sensor_umidade_01.log';
+  <h2>Dashboard Monitoramento: Horta A e B</h2>
+  <div id="configRele" class="feedback-config"></div>
 
-    async function fetchLogData() {
+  <div class="dashboard-block">
+    <h3 class="titulo-horta">Horta A</h3>
+    <canvas id="hortaAChart"></canvas>
+  </div>
+  <div class="dashboard-block">
+    <h3 class="titulo-horta">Horta B</h3>
+    <canvas id="hortaBChart"></canvas>
+  </div>
+  <script>
+    // Caminhos dos arquivos no GitHub
+    const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
+    const logBUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaB.log';
+    const releConfigUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/config_rele.json';
+
+    // Nomes dos sensores nas duas hortas
+    const sensoresA = ['S1','S2','S3','S4','S5','S6','S7','S8'];
+    const sensoresB = ['S9','S10','S11','S12','S13','S14','S15','S16'];
+
+    // Fetch e parsing de cada log multi-sensor
+    async function fetchLogData(logUrl) {
       const resp = await fetch(logUrl);
       const text = await resp.text();
       const linhas = text.trim().split('\n');
       const labels = [];
-      const valores = [];
+      const dadosPorSensor = Array.from({length:8},()=>[]);
       linhas.forEach(linha => {
         const partes = linha.split(';');
-        // Pega só linhas que têm valor de umidade numérica
-        if (partes[1] && !isNaN(parseFloat(partes[1]))) {
+        if(partes.length>=9) {
           labels.push(partes[0]);
-          valores.push(parseFloat(partes[1]));
-        }
-      });
-      return { labels, valores };
-    }
-
-    function verificarTendencia(valores) {
-      if (valores.length < 2) return "Tendência indefinida";
-      const ultimos = valores.slice(-5); // tendencia dos últimos 5 pontos
-      const diff = ultimos[ultimos.length-1] - ultimos[0];
-      if (diff > 0) return "Tendência: Crescimento (aumento da umidade)";
-      if (diff < 0) return "Tendência: Queda (redução da umidade)";
-      return "Tendência: Estável";
-    }
-
-    async function desenharGrafico() {
-      const { labels, valores } = await fetchLogData();
-      const ctx = document.getElementById('umidadeChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Umidade (%)',
-            data: valores,
-            fill: false,
-            borderColor: 'blue',
-            tension: 0.2,
-            pointRadius: 3,
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display:true, text:'Data/Hora' } },
-            y: { min:0, max:100, title:{display:true, text:'Umidade (%)'} }
-          },
-          plugins: {
-            legend: { display:false }
+          for(let i=0;i<8;i++) {
+            if(partes[i+1]) dadosPorSensor[i].push(parseFloat(partes[i+1]));
+            else dadosPorSensor[i].push(null);
           }
         }
       });
-      document.getElementById('tendenciaStatus').innerText = verificarTendencia(valores);
+      return { labels, dadosPorSensor };
     }
 
-    desenharGrafico();
+    // Configuração de relê (feedback)
+    async function fetchReleConfig() {
+      const resp = await fetch(releConfigUrl);
+      const cfg = await resp.json();
+      document.getElementById('configRele').innerHTML = 
+        `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>
+         Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`
+    }
+
+    // Gerar gráfico multi-sensores Chart.js
+    function desenharGrafico(idCanvas, labels, datasets, nomes, corBase) {
+      const cores = ['blue','red','green','orange','purple','teal','gray','brown'];
+      const dataSets = datasets.map((data, idx) => ({
+        label: nomes[idx],
+        data: data,
+        borderColor: cores[idx % cores.length],
+        fill:false,
+        tension:0.1,
+        pointRadius:1.5
+      }));
+      const ctx = document.getElementById(idCanvas).getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: dataSets },
+        options: {
+          plugins: { legend: {display:true}, title:{display:false} },
+          scales: {
+            x: { title: {display:true, text:'Data/Hora'} },
+            y: { min:0, max:100, title: {display:true, text:'Umidade (%)'} }
+          }
+        }
+      });
+    }
+
+    // Inicialização da página
+    async function initDashboard() {
+      fetchReleConfig();
+      // Horta A
+      const logA = await fetchLogData(logAUrl);
+      desenharGrafico('hortaAChart', logA.labels, logA.dadosPorSensor, sensoresA, 'blue');
+      // Horta B
+      const logB = await fetchLogData(logBUrl);
+      desenharGrafico('hortaBChart', logB.labels, logB.dadosPorSensor, sensoresB, 'red');
+    }
+
+    initDashboard();
   </script>
 </body>
 </html>
