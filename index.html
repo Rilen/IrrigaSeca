@@ -1,50 +1,75 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard IrrigaSeca - Relé Coletivo por Horta</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: Arial; margin: 20px; max-width: 900px; }
-    #periodFilter { margin-bottom: 20px; }
-    canvas { max-width: 100%; max-height: 400px; }
-    #configRele {
-      background: #f3f3f3;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 20px;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-    }
-    #statusReleContainer {
-      margin-bottom: 20px;
-      font-weight: bold;
-      font-size: 1.1em;
-      text-align: center;
-    }
-    #mapaRele {
-      margin-top: 40px;
-      max-width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #eee;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard IrrigaSeca - Relé Único por Horta</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  #container {
+    max-width: 1200px;
+    width: 100%;
+  }
+  h2, h3 {
+    text-align: center;
+  }
+  #configRele {
+    background: #f3f3f3;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+  }
+  #statusReleContainer {
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-align: center;
+  }
+  #periodSelect, #customInputs {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 300px;
+    width: 100%;
+    text-align: center;
+  }
+  #customInputs {
+    margin-top: 10px;
+  }
+  canvas {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+    margin: 0 auto 40px;
+  }
+  #mapaRele {
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
+    background-color: #eee;
+  }
+</style>
 </head>
 <body>
+<div id="container">
   <h2>Dashboard Monitoramento: Relé Único por Horta</h2>
 
   <div id="configRele"></div>
@@ -77,6 +102,7 @@
   <canvas id="hortaBChart"></canvas>
 
   <div id="mapaRele"></div>
+</div>
 
 <script>
   const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
@@ -100,7 +126,7 @@
   async function fetchLogData(logUrl) {
     const resp = await fetch(logUrl);
     const text = await resp.text();
-    const linhas = text.trim().split('\n');
+    const linhas = text.trim().split('\\n');
     const entries = [];
     linhas.forEach(linha => {
       const partes = linha.split(';');
@@ -170,11 +196,15 @@
   async function fetchMapaRele() {
     const resp = await fetch(mapaReleUrl);
     const mapa = await resp.json();
-    let html = '<h3>Mapeamento Sensores → Relés</h3><table>';
+    // Corrigir mapa para relé único por horta:
+    // todos sensores mapeados para A1 e B1
+    let html = '<h3>Mapeamento Sensores → Relé Único</h3><table>';
     html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
+
     Object.entries(mapa).forEach(([horta, sensores]) => {
-      Object.entries(sensores).forEach(([sensor, rele]) => {
-        html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
+      const releUnico = horta === 'hortaA' ? 'RELE_A1' : 'RELE_B1';
+      Object.keys(sensores).forEach(sensor => {
+        html += `<tr><td>${horta}</td><td>${sensor}</td><td>${releUnico}</td></tr>`;
       });
     });
     html += '</table>';
@@ -230,8 +260,8 @@
     if(!entries || entries.length === 0) return 'Sem dados';
     const limiar = configRele.umidade_ativacao;
     const ultimaLeitura = entries[entries.length - 1];
-    const reléAtivado = ultimaLeitura.valores.some(v => v < limiar);
-    return reléAtivado ? 'Ligado' : 'Desligado';
+    const releAtivado = ultimaLeitura.valores.some(v => v < limiar);
+    return releAtivado ? 'Ligado' : 'Desligado';
   }
 
   async function updateCharts() {
@@ -268,14 +298,12 @@
     document.getElementById('statusReleB').innerText = `Relé Horta B: ${calcularStatusRele(filteredB)}`;
   }
 
-  // Inicialização
   document.getElementById('periodSelect').addEventListener('change', updatePeriodInputs);
 
   async function main() {
     await fetchReleConfig();
     dataA = await fetchLogData(logAUrl);
     dataB = await fetchLogData(logBUrl);
-    // Definir valores default nas datas do personalizado
     const nowLocal = getCurrentDateTimeLocal();
     document.getElementById('startDate').value = nowLocal;
     document.getElementById('endDate').value = nowLocal;
