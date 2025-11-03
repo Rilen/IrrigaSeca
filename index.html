@@ -72,10 +72,10 @@
 <div id="container">
   <h2>Dashboard Monitoramento: Relé Único por Horta</h2>
 
-  <div id="configRele"></div>
+  <div id="configRele">Carregando configuração do relé...</div>
 
   <div id="statusReleContainer">
-    <span id="statusReleA"></span> | <span id="statusReleB"></span>
+    <span id="statusReleA">Carregando status do relé Horta A...</span> | <span id="statusReleB">Carregando status do relé Horta B...</span>
   </div>
 
   <label for="periodSelect">Selecione o período:</label>
@@ -101,16 +101,10 @@
   <h3>Horta B - Umidade do Solo (Gráfico de Barras)</h3>
   <canvas id="hortaBChart"></canvas>
 
-  <div id="mapaRele"></div>
+  <div id="mapaRele">Carregando mapeamento sensores → relé...</div>
 </div>
 
 <script>
-  // ATENÇÃO: Se estiver executando este HTML localmente, as URLs do GitHub (abaixo)
-  // podem falhar devido a CORS ou problemas de conectividade.
-  // Você precisará de um servidor web ou usar os arquivos locais,
-  // mas como os logs foram fornecidos no prompt, estou assumindo a leitura de URLs.
-  // **A LÓGICA DE PARSING DE DATA E LOG FOI CORRIGIDA ABAIXO**
-
   const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
   const logBUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaB.log';
   const releConfigUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/config_rele.json';
@@ -124,57 +118,42 @@
   let dataB = null;
   let configRele = null;
 
-  // CORREÇÃO: Função para analisar corretamente o formato de data/hora "YYYY-MM-DD HH:MM:SS"
   function parseDateTime(str) {
-    // 2025-06-16 00:00:00
+    // ex: "2025-06-16 00:00:00"
     const [datePart, timePart] = str.split(' ');
     const [year, month, day] = datePart.split('-');
     const [hour, minute, second] = timePart.split(':');
-    // Mês em JavaScript é 0-indexado (Janeiro = 0, Dezembro = 11)
     return new Date(year, month - 1, day, hour, minute, second);
   }
 
-  // CORREÇÃO: Lógica de fetch e parsing de log melhorada
   async function fetchLogData(logUrl) {
     try {
-        const resp = await fetch(logUrl);
-        if (!resp.ok) {
-            console.error(`Falha ao carregar log de ${logUrl}: ${resp.status} - Verifique a URL ou permissões de CORS.`);
-            return [];
-        }
-        const text = await resp.text();
-        const linhas = text.trim().split('\n');
-        const entries = [];
-        
-        // logs hortaA e hortaB tem 8 sensores, totalizando 9 partes (data + 8 valores)
-        const minPartes = 9; 
-
-        linhas.forEach(linha => {
-            // A linha de log real deve ser 'YYYY-MM-DD HH:MM:SS;V1;V2;...;V8'
-            // O é do seu prompt, precisa ser removido se estiver nos logs reais
-            const cleanLine = linha.replace(/^\/, '').trim();
-            const partes = cleanLine.split(';');
-
-            if (partes.length >= minPartes) {
-                const dt = parseDateTime(partes[0].trim());
-                // Mapear apenas os 8 valores de umidade
-                const valores = partes.slice(1, minPartes).map(v => parseFloat(v));
-                
-                // Garantir que todos os 8 valores são números
-                if (valores.length === 8 && valores.every(v => !isNaN(v))) {
-                    entries.push({ dt, valores });
-                }
-            }
-        });
-        return entries;
-    } catch (error) {
-        console.error(`Erro durante o fetch ou parsing do log em ${logUrl}:`, error);
+      const resp = await fetch(logUrl);
+      if (!resp.ok) {
+        console.error(`Falha ao carregar log de ${logUrl}: ${resp.status}`);
         return [];
+      }
+      const text = await resp.text();
+      const linhas = text.trim().split('\n');
+      const entries = [];
+
+      linhas.forEach(linha => {
+        const partes = linha.split(';');
+        if (partes.length >= 9) {
+          const dt = parseDateTime(partes[0].trim());
+          const valores = partes.slice(1, 9).map(v => parseFloat(v));
+          if (valores.every(v => !isNaN(v))) {
+            entries.push({ dt, valores });
+          }
+        }
+      });
+      return entries;
+    } catch (error) {
+      console.error(`Erro no fetch ou parsing do arquivo ${logUrl}:`, error);
+      return [];
     }
   }
 
-  // O restante do código JS permanece o mesmo, mas a correção de data/hora era crítica.
-  
   function filterEntries(entries, startDate, endDate) {
     return entries.filter(e => e.dt >= startDate && e.dt <= endDate);
   }
@@ -223,35 +202,35 @@
 
   async function fetchReleConfig() {
     try {
-        const resp = await fetch(releConfigUrl);
-        configRele = await resp.json();
-        document.getElementById('configRele').innerHTML =
-          `Configuração Relê: Ativa <b>abaixo de ${configRele.umidade_ativacao}%</b> de umidade.<br>` +
-          `Relê permanece acionado por <b>${configRele.tempo_aberto_segundos} segundos</b>.`;
+      const resp = await fetch(releConfigUrl);
+      configRele = await resp.json();
+      document.getElementById('configRele').innerHTML =
+        `Configuração Relê: Ativa <b>abaixo de ${configRele.umidade_ativacao}%</b> de umidade.<br>` +
+        `Relê permanece acionado por <b>${configRele.tempo_aberto_segundos} segundos</b>.`;
     } catch (error) {
-        console.error("Erro ao carregar configuração do relé:", error);
-        document.getElementById('configRele').innerHTML = "Configuração do relé não carregada.";
+      console.error("Erro ao carregar configuração do relé:", error);
+      document.getElementById('configRele').innerHTML = "Configuração do relé não carregada.";
     }
   }
 
   async function fetchMapaRele() {
     try {
-        const resp = await fetch(mapaReleUrl);
-        const mapa = await resp.json();
-        let html = '<h3>Mapeamento Sensores → Relé Único</h3><table>';
-        html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
+      const resp = await fetch(mapaReleUrl);
+      const mapa = await resp.json();
+      let html = '<h3>Mapeamento Sensores → Relé Único</h3><table>';
+      html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
 
-        Object.entries(mapa).forEach(([horta, sensores]) => {
-            const releUnico = horta === 'hortaA' ? 'RELE_A1' : 'RELE_B1';
-            Object.keys(sensores).forEach(sensor => {
-                html += `<tr><td>${horta}</td><td>${sensor}</td><td>${releUnico}</td></tr>`;
-            });
+      Object.entries(mapa).forEach(([horta, sensores]) => {
+        const releUnico = horta.toLowerCase() === 'hortaa' ? 'RELE_A1' : 'RELE_B1';
+        Object.keys(sensores).forEach(sensor => {
+          html += `<tr><td>${horta}</td><td>${sensor}</td><td>${releUnico}</td></tr>`;
         });
-        html += '</table>';
-        document.getElementById('mapaRele').innerHTML = html;
+      });
+      html += '</table>';
+      document.getElementById('mapaRele').innerHTML = html;
     } catch (error) {
-        console.error("Erro ao carregar mapa de relé:", error);
-        document.getElementById('mapaRele').innerHTML = "Mapa de relé não carregado.";
+      console.error("Erro ao carregar mapa de relé:", error);
+      document.getElementById('mapaRele').innerHTML = "Mapa de relé não carregado.";
     }
   }
 
@@ -301,20 +280,10 @@
 
   function calcularStatusRele(entries) {
     if(!configRele) return 'Configuração do relé não carregada';
-    // Para simplificar, estamos considerando se a última leitura tem algum sensor abaixo do limiar
-    // **NOTA: A lógica completa exigiria o parsing do sensor_umidade_01.log para obter o estado real do RELE_A1.**
-    // Para fins de demonstração e com base nos dados disponíveis em hortaA/B (que não contêm RELE_ON/OFF),
-    // a lógica de ativação baseada no limiar é mantida.
     if(!entries || entries.length === 0) return 'Sem dados';
     const limiar = configRele.umidade_ativacao;
     const ultimaLeitura = entries[entries.length - 1];
-    
-    // Verifica se *algum* sensor na última leitura está abaixo do limiar.
     const releAtivado = ultimaLeitura.valores.some(v => v < limiar);
-    
-    // Se você tivesse o log do relé:
-    // if (logRele) { ... return logRele[logRele.length - 1].status === 'RELE_ON' ? 'Ligado' : 'Desligado'; }
-
     return releAtivado ? 'Ligado (última leitura abaixo de '+limiar+'%)' : 'Desligado (última leitura acima de '+limiar+'%)';
   }
 
@@ -324,10 +293,8 @@
     let startDate, endDate = new Date();
 
     if(period === 'custom') {
-      // Ajustar fuso horário para que o parse seja UTC-agnóstico (como a entrada local)
       startDate = new Date(document.getElementById('startDate').value);
       endDate = new Date(document.getElementById('endDate').value);
-      
       if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
         alert("Informe datas corretas para o período personalizado.");
         return;
@@ -360,11 +327,6 @@
     await fetchReleConfig();
     dataA = await fetchLogData(logAUrl);
     dataB = await fetchLogData(logBUrl);
-    
-    if (dataA.length === 0 || dataB.length === 0) {
-        console.warn("Nenhum dado carregado para Horta A ou B. Verifique a URL e a estrutura do arquivo.");
-    }
-    
     const nowLocal = getCurrentDateTimeLocal();
     document.getElementById('startDate').value = nowLocal;
     document.getElementById('endDate').value = nowLocal;
@@ -373,7 +335,7 @@
   }
 
   main();
-</script>
 
+</script>
 </body>
 </html>
