@@ -2,158 +2,266 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard IrrigaSeca</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard IrrigaSeca - Filtro de Período e Gráfico de Barras</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    body { font-family: Arial; margin: 20px; max-width: 900px; }
+    #periodFilter { margin-bottom: 20px; }
+    canvas { max-width: 100%; max-height: 400px; }
     #configRele {
       background: #f3f3f3;
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 20px;
-      max-width: 90%;
-      width: 100%;
       box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
     }
-    .dashboard-block {
-      width: 100%;
-      max-width: 700px;
-      margin-bottom: 40px;
+    #mapaRele {
+      margin-top: 40px;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .titulo-horta {
-      margin-bottom: 8px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
       text-align: center;
     }
-    canvas {
-      width: 100% !important;
-      height: auto !important;
-      max-height: 350px;
-    }
-    #mapaRele {
-      max-width: 90%;
-      margin: 0 auto 40px auto;
-    }
-    /* Para melhor responsividade do gráfico */
-    @media(max-width: 750px){
-      body { margin: 10px; }
+    th {
+      background-color: #eee;
     }
   </style>
 </head>
 <body>
-  <h2>Dashboard Monitoramento: Horta A e B</h2>
+  <h2>Dashboard Monitoramento: Filtro e Visualização</h2>
+
   <div id="configRele"></div>
 
-  <div class="dashboard-block">
-    <h3 class="titulo-horta">Horta A</h3>
-    <canvas id="hortaAChart"></canvas>
+  <label for="periodSelect">Selecione o período:</label>
+  <select id="periodSelect">
+    <option value="24h">Últimas 24 horas</option>
+    <option value="7d">Últimos 7 dias (1 semana)</option>
+    <option value="15d">Últimos 15 dias</option>
+    <option value="1m">Último mês</option>
+    <option value="3m">Últimos 3 meses</option>
+    <option value="year">Último ano</option>
+    <option value="custom">Data Personalizada</option>
+  </select>
+
+  <div id="customInputs" style="display:none; margin-top:8px;">
+    <label>Data inicial: <input type="datetime-local" id="startDate"></label><br />
+    <label>Data final: <input type="datetime-local" id="endDate"></label><br />
+    <button onclick="updateCharts()">Atualizar</button>
   </div>
-  <div class="dashboard-block">
-    <h3 class="titulo-horta">Horta B</h3>
-    <canvas id="hortaBChart"></canvas>
-  </div>
+
+  <h3>Horta A - Umidade do Solo (Gráfico de Barras)</h3>
+  <canvas id="hortaAChart"></canvas>
+
+  <h3>Horta B - Umidade do Solo (Gráfico de Barras)</h3>
+  <canvas id="hortaBChart"></canvas>
 
   <div id="mapaRele"></div>
 
-  <script>
-    // URLs dos arquivos no GitHub
-    const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
-    const logBUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaB.log';
-    const releConfigUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/config_rele.json';
-    const mapaReleUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/mapa_rele.json';
+<script>
+  const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
+  const logBUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaB.log';
+  const releConfigUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/config_rele.json';
+  const mapaReleUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/mapa_rele.json';
 
-    // Nomes dos sensores
-    const sensoresA = ['S1','S2','S3','S4','S5','S6','S7','S8'];
-    const sensoresB = ['S9','S10','S11','S12','S13','S14','S15','S16'];
+  const sensoresA = ['S1','S2','S3','S4','S5','S6','S7','S8'];
+  const sensoresB = ['S9','S10','S11','S12','S13','S14','S15','S16'];
 
-    // Funções de fetch
-    async function fetchLogData(logUrl) {
-      const resp = await fetch(logUrl);
-      const text = await resp.text();
-      const linhas = text.trim().split('\n');
-      const labels = [];
-      const dadosPorSensor = Array.from({length:8}, ()=>[]);
-      linhas.forEach(linha => {
-        const partes = linha.split(';');
-        if(partes.length >= 9) {
-          labels.push(partes[0]);
-          for(let i=0; i<8; i++) {
-            dadosPorSensor[i].push(parseFloat(partes[i+1]) || null);
-          }
-        }
+  let chartA, chartB;
+  let dataA = null;
+  let dataB = null;
+
+  function parseDateTime(str) {
+    const parts = str.split(/[- :]/);
+    return new Date(parts[0], parts[1]-1, parts[2], parts[3], parts[4], parts[5]);
+  }
+
+  async function fetchLogData(logUrl) {
+    const resp = await fetch(logUrl);
+    const text = await resp.text();
+    const linhas = text.trim().split('\n');
+    const entries = [];
+    linhas.forEach(linha => {
+      const partes = linha.split(';');
+      if(partes.length >= 9) {
+        const dt = parseDateTime(partes[0]);
+        const valores = partes.slice(1,9).map(v => parseFloat(v));
+        entries.push({ dt, valores });
+      }
+    });
+    return entries;
+  }
+
+  function filterEntries(entries, startDate, endDate) {
+    return entries.filter(e => e.dt >= startDate && e.dt <= endDate);
+  }
+
+  function formatLabels(entries) {
+    return entries.map(e => e.dt.toISOString().slice(0,16).replace('T', ' '));
+  }
+
+  function prepareDatasets(entries) {
+    const nSensores = 8;
+    const datasets = Array.from({ length: nSensores }, () => []);
+    entries.forEach(e => {
+      for(let i = 0; i < nSensores; i++) {
+        datasets[i].push(e.valores[i]);
+      }
+    });
+    return datasets;
+  }
+
+  function desenharGraficoBarra(idCanvas, labels, datasets, sensores) {
+    const cores = ['blue','red','green','orange','purple','teal','gray','brown'];
+    const dataSets = datasets.map((data,i) => ({
+      label: sensores[i],
+      data,
+      backgroundColor: cores[i % cores.length],
+    }));
+    const ctx = document.getElementById(idCanvas).getContext('2d');
+    if(idCanvas === 'hortaAChart' && chartA) chartA.destroy();
+    if(idCanvas === 'hortaBChart' && chartB) chartB.destroy();
+    const newChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: dataSets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: false, title: { display: true, text: 'Data/Hora' } },
+          y: { beginAtZero: true, max: 100, title: { display: true, text: 'Umidade (%)' } }
+        },
+        plugins: { legend: { display: true } }
+      }
+    });
+    if(idCanvas === 'hortaAChart') chartA = newChart;
+    if(idCanvas === 'hortaBChart') chartB = newChart;
+  }
+
+  async function fetchReleConfig() {
+    const resp = await fetch(releConfigUrl);
+    const cfg = await resp.json();
+    document.getElementById('configRele').innerHTML =
+      `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>` +
+      `Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`;
+  }
+
+  async function fetchMapaRele() {
+    const resp = await fetch(mapaReleUrl);
+    const mapa = await resp.json();
+    let html = '<h3>Mapeamento Sensores → Relés</h3><table>';
+    html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
+    Object.entries(mapa).forEach(([horta, sensores]) => {
+      Object.entries(sensores).forEach(([sensor, rele]) => {
+        html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
       });
-      return { labels, dadosPorSensor };
+    });
+    html += '</table>';
+    document.getElementById('mapaRele').innerHTML = html;
+  }
+
+  function getCurrentDateTimeLocal() {
+    const dt = new Date();
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset()); // Ajustar para timezone local
+    return dt.toISOString().slice(0,16);
+  }
+
+  function getDateRangeForPeriod(period) {
+    const now = new Date();
+    let start, end = now;
+    switch(period) {
+      case '24h':
+        start = new Date(now.getTime() - 24*60*60*1000);
+        break;
+      case '7d':
+        start = new Date(now.getTime() - 7*24*60*60*1000);
+        break;
+      case '15d':
+        start = new Date(now.getTime() - 15*24*60*60*1000);
+        break;
+      case '1m':
+        start = new Date(now);
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case '3m':
+        start = new Date(now);
+        start.setMonth(start.getMonth() - 3);
+        break;
+      case 'year':
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        start = new Date(0);
+    }
+    return { start, end };
+  }
+
+  function updatePeriodInputs() {
+    const period = document.getElementById('periodSelect').value;
+    document.getElementById('customInputs').style.display = (period === 'custom') ? 'block' : 'none';
+    if(period !== 'custom') {
+      updateCharts();
+    }
+  }
+
+  async function updateCharts() {
+    if(!dataA || !dataB) return;
+    const period = document.getElementById('periodSelect').value;
+    let startDate, endDate = new Date();
+
+    if(period === 'custom') {
+      startDate = new Date(document.getElementById('startDate').value);
+      endDate = new Date(document.getElementById('endDate').value);
+      if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+        alert("Informe datas corretas para o período personalizado.");
+        return;
+      }
+    } else {
+      const range = getDateRangeForPeriod(period);
+      startDate = range.start;
+      endDate = range.end;
     }
 
-    async function fetchReleConfig() {
-      const resp = await fetch(releConfigUrl);
-      const cfg = await resp.json();
-      document.getElementById('configRele').innerHTML =
-        `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>` +
-        `Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`;
-    }
+    const filteredA = filterEntries(dataA, startDate, endDate);
+    const filteredB = filterEntries(dataB, startDate, endDate);
 
-    function desenharGrafico(idCanvas, labels, datasets, nomes) {
-      const cores = ['blue','red','green','orange','purple','teal','gray','brown'];
-      const dataSets = datasets.map((data, idx) => ({
-        label: nomes[idx],
-        data: data,
-        borderColor: cores[idx % cores.length],
-        fill: false,
-        tension: 0.1,
-        pointRadius: 1.5
-      }));
-      const ctx = document.getElementById(idCanvas).getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: dataSets },
-        options: {
-          plugins: { legend: { display: true }, title: { display: false } },
-          scales: {
-            x: { title: { display: true, text: 'Data/Hora' } },
-            y: { min: 0, max: 100, title: { display: true, text: 'Umidade (%)' } }
-          },
-          responsive: true,
-          maintainAspectRatio: false
-        }
-      });
-    }
+    const labelsA = formatLabels(filteredA);
+    const labelsB = formatLabels(filteredB);
 
-    async function fetchMapaRele() {
-      const resp = await fetch(mapaReleUrl);
-      const mapa = await resp.json();
-      let html = '<h3>Mapeamento Sensores → Relés</h3><table>';
-      html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
-      Object.entries(mapa).forEach(([horta, sensores]) => {
-        Object.entries(sensores).forEach(([sensor, rele]) => {
-          html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
-        });
-      });
-      html += '</table>';
-      document.getElementById('mapaRele').innerHTML = html;
-    }
+    const datasetsA = prepareDatasets(filteredA);
+    const datasetsB = prepareDatasets(filteredB);
 
-    async function initDashboard() {
-      await fetchReleConfig();
-      const logA = await fetchLogData(logAUrl);
-      desenharGrafico('hortaAChart', logA.labels, logA.dadosPorSensor, sensoresA);
-      const logB = await fetchLogData(logBUrl);
-      desenharGrafico('hortaBChart', logB.labels, logB.dadosPorSensor, sensoresB);
-      fetchMapaRele();
-    }
+    desenharGraficoBarra('hortaAChart', labelsA, datasetsA, sensoresA);
+    desenharGraficoBarra('hortaBChart', labelsB, datasetsB, sensoresB);
+  }
 
-    initDashboard();
-  </script>
+  // Inicialização
+  document.getElementById('periodSelect').addEventListener('change', updatePeriodInputs);
+
+  async function main() {
+    await fetchReleConfig();
+    dataA = await fetchLogData(logAUrl);
+    dataB = await fetchLogData(logBUrl);
+    // Definir valores default nas datas do personalizado
+    const nowLocal = getCurrentDateTimeLocal();
+    document.getElementById('startDate').value = nowLocal;
+    document.getElementById('endDate').value = nowLocal;
+    updatePeriodInputs();
+    await fetchMapaRele();
+  }
+
+  main();
+</script>
+
 </body>
 </html>
