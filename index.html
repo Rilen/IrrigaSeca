@@ -1,117 +1,139 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard IrrigaSeca - Relé Único por Horta</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 20px;
-    display: flex;
-    justify-content: center;
-  }
-  #container {
-    max-width: 1200px;
-    width: 100%;
-  }
-  h2, h3 {
-    text-align: center;
-  }
-  #configRele {
-    background: #f3f3f3;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 20px;
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-  }
-  #statusReleContainer {
-    margin-bottom: 20px;
-    font-weight: bold;
-    font-size: 1.1em;
-    text-align: center;
-  }
-  #periodSelect, #customInputs {
-    display: block;
-    margin: 0 auto 20px;
-    max-width: 300px;
-    width: 100%;
-    text-align: center;
-  }
-  #customInputs {
-    margin-top: 10px;
-  }
-  .dashboard-block, canvas {
-    width: 70vw !important;    /* força largura de 70% da viewport */
-    max-width: 70vw !important;
-    min-width: 400px;
-    height: 400px;             /* altura fixa para melhor visualização */
-    display: block;
-    margin: 0 auto 40px;
-    text-align: center;
-  }
-  #mapaRele {
-    max-width: 600px;
-    margin: 0 auto 40px auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-  }
-  th {
-    background-color: #eee;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Fileiras - Irrigação Sensor Único</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 20px;
+      display: flex; justify-content: center;
+    }
+    #container {
+      max-width: 1200px; width: 100%;
+    }
+    h2 {
+      text-align: center;
+    }
+    .graficos-fileira {
+      margin-bottom: 50px;
+      text-align: center;
+    }
+    .grafico-titulo {
+      margin-bottom: 8px;
+    }
+    canvas {
+      width: 70vw !important;
+      max-width: 70vw;
+      min-width: 400px;
+      height: 400px;
+      display: block;
+      margin: 0 auto 30px;
+    }
+  </style>
 </head>
 <body>
 <div id="container">
-  <h2>Dashboard Monitoramento: Relé Único por Horta</h2>
-
-  <div id="configRele">Carregando configuração do relé...</div>
-
-  <div id="statusReleContainer">
-    <span id="statusReleA">Carregando status do relé Horta A...</span> | <span id="statusReleB">Carregando status do relé Horta B...</span>
-  </div>
-
-  <label for="periodSelect">Selecione o período:</label>
-  <select id="periodSelect">
-    <option value="24h">Últimas 24 horas</option>
-    <option value="7d">Últimos 7 dias (1 semana)</option>
-    <option value="15d">Últimos 15 dias</option>
-    <option value="1m">Último mês</option>
-    <option value="3m">Últimos 3 meses</option>
-    <option value="year">Último ano</option>
-    <option value="custom">Data Personalizada</option>
-  </select>
-
-  <div id="customInputs" style="display:none; margin-top:8px;">
-    <label>Data inicial: <input type="datetime-local" id="startDate"></label><br />
-    <label>Data final: <input type="datetime-local" id="endDate"></label><br />
-    <button onclick="updateCharts()">Atualizar</button>
-  </div>
-
-  <h3>Horta A - Umidade do Solo (Gráfico de Barras)</h3>
-  <canvas id="hortaAChart"></canvas>
-
-  <h3>Horta B - Umidade do Solo (Gráfico de Barras)</h3>
-  <canvas id="hortaBChart"></canvas>
-
-  <div id="mapaRele">Carregando mapeamento sensores → relé...</div>
+  <h2>Monitoramento de Umidade por Fileira<br />Irrigação Automática • Sensor único a 20cm</h2>
+  <div id="graficos"></div>
 </div>
-
 <script>
-  // Seu código JS do dashboard permanece o mesmo!
+const fileiras = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
+const cores = ['blue','red','green','orange'];
+const urls = fileiras.map(f => 
+  `https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/${f}.log`
+);
 
-  // ... (copie todo o JS do dashboard anterior aqui)
+// Busca o log e retorna { labels, umidade, eventos }
+async function fetchFileiraLog(url) {
+  const resp = await fetch(url);
+  const text = await resp.text();
+  const linhas = text.trim().split('\n');
+  const labels = [], umidade = [], eventos = [];
+  linhas.forEach((linha, i) => {
+    const partes = linha.split(';');
+    if (partes.length >= 2) {
+      // data/hora;umidade;RELE_STATUS(opcional)
+      labels.push(partes[0].trim());
+      umidade.push(parseFloat(partes[1]));
+      if (partes[2]) eventos.push({ x: i, status: partes[2].trim() });
+    }
+  });
+  return { labels, umidade, eventos };
+}
 
+function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  // Plotar eventos como pontos extras em cima do gráfico
+  const eventData_ON = eventos.filter(e=>e.status==='RELE_ON').map(e=>({x: e.x, y: umidade[e.x]}));
+  const eventData_OFF = eventos.filter(e=>e.status==='RELE_OFF').map(e=>({x: e.x, y: umidade[e.x]}));
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Umidade (%)',
+          data: umidade,
+          borderColor: cor,
+          backgroundColor: cor,
+          pointRadius: 2,
+          fill: false,
+          tension: 0.1
+        },
+        {
+          type: 'scatter',
+          label: 'RELE_ON',
+          data: eventData_ON,
+          borderColor: 'black',
+          backgroundColor: 'magenta',
+          pointRadius: 6,
+          showLine: false,
+        },
+        {
+          type: 'scatter',
+          label: 'RELE_OFF',
+          data: eventData_OFF,
+          borderColor: 'black',
+          backgroundColor: 'lime',
+          pointStyle: 'rect',
+          pointRadius: 6,
+          showLine: false,
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: true }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { title: { display: true, text: 'Data/Hora' }, ticks: { maxRotation: 60, minRotation: 45, maxTicksLimit: 12 } },
+        y: { min: 0, max: 40, title: { display: true, text: 'Umidade (%)' } }
+      }
+    }
+  });
+}
+
+async function main() {
+  const container = document.getElementById('graficos');
+  for(let i=0; i<fileiras.length; i++) {
+    const data = await fetchFileiraLog(urls[i]);
+    const titulo = `Fileira ${String.fromCharCode(65+i)} (Sensor 20cm)`;
+    const canvasId = `canvas_${fileiras[i]}`;
+    const div = document.createElement('div');
+    div.className = 'graficos-fileira';
+    div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
+                     <canvas id="${canvasId}"></canvas>`;
+    container.appendChild(div);
+    plotFileira(canvasId, titulo, cores[i], data.labels, data.umidade, data.eventos);
+  }
+}
+
+main();
 </script>
 </body>
 </html>
