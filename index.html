@@ -14,9 +14,7 @@
     #container {
       max-width: 1200px; width: 100%;
     }
-    h2 {
-      text-align: center;
-    }
+    h2 { text-align: center; }
     .graficos-fileira {
       margin-bottom: 50px;
       text-align: center;
@@ -26,11 +24,15 @@
     }
     canvas {
       width: 70vw !important;
-      max-width: 70vw;
+      max-width: 70vw !important;
       min-width: 400px;
-      height: 400px;
+      height: 400px !important;
+      min-height: 400px !important;
       display: block;
       margin: 0 auto 30px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(150,150,150,0.08);
     }
   </style>
 </head>
@@ -55,7 +57,6 @@ async function fetchFileiraLog(url) {
   linhas.forEach((linha, i) => {
     const partes = linha.split(';');
     if (partes.length >= 2) {
-      // data/hora;umidade;RELE_STATUS(opcional)
       labels.push(partes[0].trim());
       umidade.push(parseFloat(partes[1]));
       if (partes[2]) eventos.push({ x: i, status: partes[2].trim() });
@@ -66,7 +67,6 @@ async function fetchFileiraLog(url) {
 
 function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
   const ctx = document.getElementById(canvasId).getContext('2d');
-  // Plotar eventos como pontos extras em cima do gráfico
   const eventData_ON = eventos.filter(e=>e.status==='RELE_ON').map(e=>({x: e.x, y: umidade[e.x]}));
   const eventData_OFF = eventos.filter(e=>e.status==='RELE_OFF').map(e=>({x: e.x, y: umidade[e.x]}));
   new Chart(ctx, {
@@ -105,9 +105,7 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
       ]
     },
     options: {
-      plugins: {
-        legend: { display: true }
-      },
+      plugins: { legend: { display: true } },
       responsive: true,
       maintainAspectRatio: false,
       scales: {
@@ -126,8 +124,9 @@ async function main() {
     const canvasId = `canvas_${fileiras[i]}`;
     const div = document.createElement('div');
     div.className = 'graficos-fileira';
+    // Importante: canvas traz atributo height fixo para garantir altura no Chart.js
     div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
-                     <canvas id="${canvasId}"></canvas>`;
+                     <canvas id="${canvasId}" height="400"></canvas>`;
     container.appendChild(div);
     plotFileira(canvasId, titulo, cores[i], data.labels, data.umidade, data.eventos);
   }
