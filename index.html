@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard IrrigaSeca</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -9,6 +10,9 @@
     .dashboard-block { margin-bottom: 40px; }
     .titulo-horta { margin-bottom:8px; }
     .feedback-config { background: #f3f3f3; border:1px solid #ddd; border-radius:8px; margin-bottom:18px; padding:8px 12px;}
+    table { width: 100%; max-width: 700px; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -23,100 +27,103 @@
     <h3 class="titulo-horta">Horta B</h3>
     <canvas id="hortaBChart"></canvas>
   </div>
+
+  <div id="mapaRele"></div>
+
   <script>
-    // Caminhos dos arquivos no GitHub
+    // URLs dos arquivos no GitHub
     const logAUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaA.log';
     const logBUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/hortaB.log';
     const releConfigUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/config_rele.json';
+    const mapaReleUrl = 'https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/mapa_rele.json';
 
-    // Nomes dos sensores nas duas hortas
+    // Nomes dos sensores
     const sensoresA = ['S1','S2','S3','S4','S5','S6','S7','S8'];
     const sensoresB = ['S9','S10','S11','S12','S13','S14','S15','S16'];
 
-    // Fetch e parsing de cada log multi-sensor
+    // Função para buscar e processar arquivos log multi-sensor
     async function fetchLogData(logUrl) {
       const resp = await fetch(logUrl);
       const text = await resp.text();
       const linhas = text.trim().split('\n');
       const labels = [];
-      const dadosPorSensor = Array.from({length:8},()=>[]);
+      const dadosPorSensor = Array.from({length:8}, ()=>[]);
       linhas.forEach(linha => {
         const partes = linha.split(';');
-        if(partes.length>=9) {
+        if(partes.length >= 9) {
           labels.push(partes[0]);
-          for(let i=0;i<8;i++) {
-            if(partes[i+1]) dadosPorSensor[i].push(parseFloat(partes[i+1]));
-            else dadosPorSensor[i].push(null);
+          for(let i=0; i<8; i++) {
+            dadosPorSensor[i].push(parseFloat(partes[i+1]) || null);
           }
         }
       });
       return { labels, dadosPorSensor };
     }
 
-    // Configuração de relê (feedback)
+    // Função para buscar e mostrar configuração do relê
     async function fetchReleConfig() {
       const resp = await fetch(releConfigUrl);
       const cfg = await resp.json();
-      document.getElementById('configRele').innerHTML = 
-        `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>
-         Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`
+      document.getElementById('configRele').innerHTML =
+        `Configuração Relê: Ativa <b>abaixo de ${cfg.umidade_ativacao}%</b> de umidade.<br>` +
+        `Relê permanece acionado por <b>${cfg.tempo_aberto_segundos} segundos</b>.`;
     }
 
-    // Gerar gráfico multi-sensores Chart.js
-    function desenharGrafico(idCanvas, labels, datasets, nomes, corBase) {
+    // Função para desenhar gráfico com Chart.js
+    function desenharGrafico(idCanvas, labels, datasets, nomes) {
       const cores = ['blue','red','green','orange','purple','teal','gray','brown'];
       const dataSets = datasets.map((data, idx) => ({
         label: nomes[idx],
         data: data,
         borderColor: cores[idx % cores.length],
-        fill:false,
-        tension:0.1,
-        pointRadius:1.5
+        fill: false,
+        tension: 0.1,
+        pointRadius: 1.5,
+        spanGaps: true
       }));
       const ctx = document.getElementById(idCanvas).getContext('2d');
       new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: dataSets },
         options: {
-          plugins: { legend: {display:true}, title:{display:false} },
+          plugins: { legend: { display: true }, title: { display: false } },
           scales: {
-            x: { title: {display:true, text:'Data/Hora'} },
-            y: { min:0, max:100, title: {display:true, text:'Umidade (%)'} }
-          }
+            x: { title: { display: true, text: 'Data/Hora' } },
+            y: { min: 0, max: 100, title: { display: true, text: 'Umidade (%)' } }
+          },
+          responsive: true,
+          maintainAspectRatio: false
         }
       });
     }
 
-    // Inicialização da página
-    async function initDashboard() {
-      fetchReleConfig();
-      // Horta A
-      const logA = await fetchLogData(logAUrl);
-      desenharGrafico('hortaAChart', logA.labels, logA.dadosPorSensor, sensoresA, 'blue');
-      // Horta B
-      const logB = await fetchLogData(logBUrl);
-      desenharGrafico('hortaBChart', logB.labels, logB.dadosPorSensor, sensoresB, 'red');
+    // Função para buscar e mostrar o mapeamento sensores -> relés
+    async function fetchMapaRele() {
+      const resp = await fetch(mapaReleUrl);
+      const mapa = await resp.json();
+      let html = '<h3>Mapeamento Sensores → Relés</h3><table>';
+      html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
+      Object.entries(mapa).forEach(([horta, sensores]) => {
+        Object.entries(sensores).forEach(([sensor, rele]) => {
+          html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
+        });
+      });
+      html += '</table>';
+      document.getElementById('mapaRele').innerHTML = html;
     }
 
+    // Inicialização do dashboard
+    async function initDashboard() {
+      await fetchReleConfig();
+      const logA = await fetchLogData(logAUrl);
+      desenharGrafico('hortaAChart', logA.labels, logA.dadosPorSensor, sensoresA);
+      const logB = await fetchLogData(logBUrl);
+      desenharGrafico('hortaBChart', logB.labels, logB.dadosPorSensor, sensoresB);
+      fetchMapaRele();
+    }
+
+    // Executa ao carregar a página
     initDashboard();
   </script>
-  <div id="mapaRele"></div>
-<script>
-  async function fetchMapaRele() {
-    const resp = await fetch('https://raw.githubusercontent.com/Rilen/IrrigaSeca/main/data/mapa_rele.json');
-    const mapa = await resp.json();
-    let html = '<h3>Mapeamento Sensores &rarr; Relés</h3><table border="1" cellpadding="5" style="border-collapse:collapse;">';
-    html += '<tr><th>Horta</th><th>Sensor</th><th>Relé</th></tr>';
-    Object.entries(mapa).forEach(([horta, sensores]) => {
-      Object.entries(sensores).forEach(([sensor, rele]) => {
-        html += `<tr><td>${horta}</td><td>${sensor}</td><td>${rele}</td></tr>`;
-      });
-    });
-    html += '</table>';
-    document.getElementById('mapaRele').innerHTML = html;
-  }
-  fetchMapaRele();
-</script>
-
 </body>
 </html>
