@@ -150,7 +150,8 @@ const map=()=>{
   L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mp);
 };
 
-[a,m,p,...chks].forEach(el=>el.onchange=upd);
+// NOVO (funciona em celular)
+[a,m,p,...chks].forEach(el=>el.addEventListener('change',upd));
 upd();
 </script>
 </body>
