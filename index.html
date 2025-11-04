@@ -4,7 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dashboard Fileiras - Gráfico Único com Filtros</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -60,7 +66,7 @@
     content: '';
     display: inline-block;
     width: 14px; height: 14px;
-    background: orange; /* Alterado de yellow para orange para melhor visibilidade */
+    background: orange;
     border: 1px solid #aaa;
     margin-right: 6px;
     vertical-align: middle;
@@ -73,7 +79,9 @@
   .fileira-checkboxes input[type="checkbox"]:checked + span {
     font-weight: bold;
   }
-  canvas {
+  
+  /* Gráfico de Linha */
+  #graficoUnico {
     width: 80vw !important;
     max-width: 80vw !important;
     min-width: 400px;
@@ -86,7 +94,7 @@
     box-shadow: 0 2px 8px rgba(150,150,150,0.1);
   }
   
-  /* Estilos para a nova seção (MOVIDO PARA O HEAD) */
+  /* Estilos para a seção Preditiva */
   #predictive-analysis {
     border-top: 2px solid #eee;
     margin-top: 40px;
@@ -133,17 +141,14 @@
   .risk-medio { color: #F0AD4E; }
   .risk-baixo { color: #5CB85C; }
 
+  /* CSS ATUALIZADO PARA O MAPA
+    (Removemos o CSS do placeholder)
+  */
   #risk-map {
     height: 300px; /* Altura do mapa */
     width: 100%;
     border-radius: 8px;
     border: 1px solid #ccc;
-    background-color: #eef; /* Cor de placeholder */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #999;
-    font-style: italic;
   }
 </style>
 </head>
@@ -211,9 +216,7 @@
         <p style="text-align: center; font-size: 0.9em; color: #777;">
           Análise de estresse hídrico interpolada (NDVI + Sensores).
         </p>
-        <div id="risk-map">
-          (Placeholder para o Mapa de Calor Preditivo)
-        </div>
+        <div id="risk-map"></div>
       </div>
 
     </div>
@@ -258,9 +261,9 @@ for(let i = 0; i < mesSelect.options.length; i++) {
 
 function getLogUrl(fileira, mes, ano) {
   // Use os arquivos de simulação se eles existirem
-  return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
+  //return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
   // Ou volte para o original:
-  //return `./data/${fileira}_${mes}_${ano}.log`;
+  return `./data/${fileira}_${mes}_${ano}.log`;
 }
 
 async function fetchLog(fileira, mes, ano) {
@@ -396,7 +399,7 @@ async function atualizarGrafico() {
   });
 }
 
-// --- LÓGICA DA TABELA PREDITIVA (MOVIDO PARA CÁ) ---
+// --- LÓGICA DA TABELA PREDITIVA ---
 function popularPrevisao() {
   const tabela = document.getElementById('risk-forecast-table');
   
@@ -413,12 +416,47 @@ function popularPrevisao() {
     html += `
       <tr>
         <td>${p.fileira}</td>
-        <td class="${p.classe}">${p.risco}</td>
+        <td class="${p.classe}">${p.classe}">${p.risco}</td>
       </tr>
     `;
   });
   tabela.innerHTML = html;
 }
+
+/* NOVA FUNÇÃO: Inicializar o Mapa de Calor
+  (Isso substitui o seu "placeholder")
+*/
+function inicializarMapaDeCalor() {
+  // Coordenadas fictícias do centro da sua lavoura
+  const centroLavoura = [-23.55, -46.63]; 
+
+  // 1. Inicializa o mapa dentro da div 'risk-map'
+  const map = L.map('risk-map').setView(centroLavoura, 15); // Nível de zoom 15
+
+  // 2. Adiciona o "chão" do mapa (camada de satélite ou ruas)
+  L.tileLayer('https_//_tile_openstreetmap_org_/{z}/{x}/{y}.png', { // Substituído para não ser um link
+      attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // 3. Dados Fictícios (Latitude, Longitude, Intensidade do Risco)
+  //    No seu projeto real, seu modelo de ML (Python) 
+  //    geraria esses pontos (ou um GeoJSON)
+  const dadosRisco = [
+    [-23.548, -46.635, 0.2], // Fileira A (Risco Baixo = 0.2)
+    [-23.549, -46.630, 0.2], // Fileira B (Risco Baixo = 0.2)
+    [-23.552, -46.632, 1.0], // Fileira C (Risco Alto = 1.0)
+    [-23.551, -46.637, 0.6]  // Fileira D (Risco Médio = 0.6)
+  ];
+
+  // 4. Cria a camada de calor (heatmap)
+  L.heatLayer(dadosRisco, {
+      radius: 25,
+      max: 1.0, // Intensidade máxima (Risco Alto)
+      blur: 15,
+      gradient: { 0.2: 'green', 0.5: 'yellow', 1.0: 'red' } // Gradiente de cores
+  }).addTo(map);
+}
+
 
 // --- INICIALIZAÇÃO ---
 anoSelect.addEventListener('change', atualizarGrafico);
@@ -430,6 +468,8 @@ fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico
 atualizarGrafico();
 // Inicializa tabela de previsão
 popularPrevisao();
+// Inicializa o mapa de calor
+inicializarMapaDeCalor();
 
 </script>
 </body>
