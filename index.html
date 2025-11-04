@@ -1,457 +1,157 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard Fileiras - Gráfico Único com Filtros</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IrrigaSeca Mobile</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; justify-content: center;
-  }
-  #container {
-    max-width: 1200px; width: 100%;
-  }
-  h2 { text-align: center; }
-  .menu-container {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-  }
-  .menu-block {
-    text-align: left;
-    max-width: 200px;
-  }
-  .fileira-checkboxes label {
-    display: block;
-    margin: 4px 0;
-    cursor: pointer;
-  }
-  /* Cores para os checkboxes na label */
-  .fileira-checkboxes label input[value="fileiraA"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: blue;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraB"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: red;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraC"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: green;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraD"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: orange;
-    border: 1px solid #aaa;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  /* Esconde checkbox padrão */
-  .fileira-checkboxes input[type="checkbox"] {
-    display: none;
-  }
-  /* Estilo customizado para o checkbox */
-  .fileira-checkboxes input[type="checkbox"]:checked + span {
-    font-weight: bold;
-  }
-  
-  /* Gráfico de Linha */
-  #graficoUnico {
-    aspect-ratio: 16/9;
-    width: 80vw;
-    max-width: 80vw !important;
-    min-width: 400px;
-    height: 450px;
-    min-height: 450px !important;
-    display: block;
-    margin: 0 auto 30px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(150,150,150,0.1);
-  }
-  
-  /* Estilos para a seção Preditiva */
-  #predictive-analysis {
-    border-top: 2px solid #eee;
-    margin-top: 40px;
-    padding-top: 20px;
-  }
-  #predictive-container {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  .prediction-block {
-    flex: 1;
-    min-width: 280px;
-    max-width: 45%;
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-  }
-  .prediction-block h3 {
-    margin-top: 0;
-    text-align: center;
-    color: #333;
-  }
-  .risk-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .risk-table td {
-    padding: 12px 8px;
-    border-bottom: 1px solid #eee;
-  }
-  .risk-table td:first-child {
-    font-weight: bold;
-    color: #555;
-  }
-  .risk-table td:last-child {
-    text-align: right;
-    font-weight: bold;
-  }
-  /* Classes de Risco (simuladas) */
-  .risk-alto { color: #D9534F; }
-  .risk-medio { color: #F0AD4E; }
-  .risk-baixo { color: #5CB85C; }
-
-  /* CSS ATUALIZADO PARA O MAPA */
-  #risk-map {
-    height: 300px; /* Altura do mapa */
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+  body{font:14px Arial;margin:0;background:#f5f5f5}
+  #c{padding:10px;max-width:1200px;margin:auto}
+  h2{text-align:center;margin:10px 0}
+  .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
+  .menu div{width:100%;max-width:300px}
+  .chk label{display:flex;align-items:center;gap:8px;cursor:pointer}
+  .chk input{display:none}
+  .chk span{position:relative;padding-left:22px}
+  .chk span::before{content:'';position:absolute;left:0;width:14px;height:14px;border-radius:4px}
+  #fA span::before{background:#00f}
+  #fB span::before{background:#f00}
+  #fC span::before{background:#0f0}
+  #fD span::before{background:#fa0}
+  .chk input:checked+span{font-weight:bold}
+  canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
+  #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
+  .blc{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin:10px 0}
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl td{padding:8px;border-bottom:1px solid #eee}
+  .tbl td:last-child{text-align:right;font-weight:bold}
+  .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
+  #map{height:250px;border-radius:8px;border:1px solid #ccc}
+  @media(min-width:768px){
+    .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
+    canvas#graf{height:450px}
+    #map{height:300px}
+    .blc{max-width:45%;display:inline-block;vertical-align:top}
   }
 </style>
 </head>
 <body>
-<div id="container">
-  <h2>Umidade por Fileiras - Gráfico Único</h2>
-
-  <div class="menu-container">
-    <div class="menu-block">
-      <label for="anoSelect">Ano:</label>
-      <select id="anoSelect"></select>
-    </div>
-    <div class="menu-block">
-      <label for="mesSelect">Mês:</label>
-      <select id="mesSelect">
-        <option value="janeiro">Janeiro</option>
-        <option value="fevereiro">Fevereiro</option>
-        <option value="marco">Março</option>
-        <option value="abril">Abril</option>
-        <option value="maio">Maio</option>
-        <option value="junho">Junho</option>
-        <option value="julho">Julho</option>
-        <option value="agosto">Agosto</option>
-        <option value="setembro">Setembro</option>
-        <option value="outubro">Outubro</option>
-        <option value="novembro" selected>Novembro</option>
-        <option value="dezembro">Dezembro</option>
-      </select>
-    </div>
-    <div class="menu-block">
-      <label for="periodoSelect">Período:</label>
-      <select id="periodoSelect">
-        <option value="24h">Últimas 24h</option>
-        <option value="7d">Última semana</option>
-        <option value="15d">Últimos 15 dias</option>
-        <option value="all" selected>Todo o mês</option>
-      </select>
-    </div>
-    <div class="menu-block fileira-checkboxes">
-      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
-      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
-      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
-      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
+<div id="c">
+  <h2>IrrigaSeca</h2>
+  <div class="menu">
+    <div><label>Ano:<select id="a"></select></label></div>
+    <div><label>Mês:<select id="m">
+      <option>janeiro</option><option>fevereiro</option><option>marco</option>
+      <option>abril</option><option>maio</option><option>junho</option>
+      <option>julho</option><option>agosto</option><option>setembro</option>
+      <option>outubro</option><option value="novembro" selected>novembro</option>
+      <option>dezembro</option>
+    </select></label></div>
+    <div><label>Período:<select id="p">
+      <option value="24h">24h</option><option value="7d">7d</option>
+      <option value="15d">15d</option><option value="all" selected>Tudo</option>
+    </select></label></div>
+    <div class="chk">
+      <label id="fA"><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
+      <label id="fB"><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
+      <label id="fC"><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
+      <label id="fD"><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
     </div>
   </div>
+  <canvas id="graf"></canvas>
 
-  <canvas id="graficoUnico"></canvas>
-
-  <div id="predictive-analysis">
-    <h2 style="text-align: center; margin-bottom: 25px;">Análise Preditiva de Risco</h2>
-
-    <div id="predictive-container">
-      
-      <div class="prediction-block">
-        <h3>Previsão de Risco (Próximas 12h)</h3>
-        <p style="text-align: center; font-size: 0.9em; color: #777;">
-          Simulação baseada em dados históricos e previsão do tempo (fictícia).
-        </p>
-        <table class="risk-table" id="risk-forecast-table">
-          </table>
+  <div id="pred">
+    <h2>Análise Preditiva</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">
+      <div class="blc"><h3>Próximas 12h</h3>
+        <table class="tbl" id="tbl"></table>
       </div>
-
-      <div class="prediction-block">
-        <h3>Mapa de Calor Geoespacial</h3>
-        <p style="text-align: center; font-size: 0.9em; color: #777;">
-          Análise de estresse hídrico interpolada (NDVI + Sensores).
-        </p>
-        <div id="risk-map"></div>
+      <div class="blc"><h3>Mapa de Calor</h3>
+        <div id="map"></div>
       </div>
-
     </div>
   </div>
-  </div> <script>
-// --- LÓGICA DO GRÁFICO PRINCIPAL ---
-const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
-const cores = ['blue', 'red', 'green', 'orange'];
+</div>
 
-const anoSelect = document.getElementById('anoSelect');
-const mesSelect = document.getElementById('mesSelect');
-const periodoSelect = document.getElementById('periodoSelect');
-const graficoUnicoCtx = document.getElementById('graficoUnico').getContext('2d');
-const fileiraCheckboxes = document.querySelectorAll('.fileira-checkboxes input[type=checkbox]');
+<script>
+const files=["fileiraA","fileiraB","fileiraC","fileiraD"];
+const cores=['#00f','#f00','#0f0','#fa0'];
+const MAX=500; let chart=null,th=0;
+const cache={};
 
-let fileiraCache = {};
-let chartInstance = null;
+const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
+const ctx=document.getElementById('graf').getContext('2d');
+const chks=document.querySelectorAll('.chk input');
 
-// Popula menu de anos dinamicamente (2022 - 2027)
-function popularAnos() {
-  const anoInicio = 2022;
-  const anoFim = 2027;
-  const anoAtual = new Date().getFullYear();
-  for(let ano=anoInicio; ano <= anoFim; ano++){
-    const option = document.createElement('option');
-    option.value = ano;
-    option.textContent = ano;
-    if(ano === anoAtual) option.selected = true;
-    anoSelect.appendChild(option);
-  }
-}
-popularAnos();
+for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
+a.value=2025;
 
-// Seleciona automaticamente o mês atual no select
-const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long'}).toLowerCase();
-for(let i = 0; i < mesSelect.options.length; i++) {
-  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
-    mesSelect.selectedIndex = i;
-    break;
-  }
+function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
+async function load(f){
+  const u=url(f); if(cache[u])return cache[u];
+  try{
+    const r=await fetch(u);
+    if(!r.ok)return {l:[],d:[]};
+    const t=await r.text();
+    const linhas=t.trim().split('\n');
+    const l=[],d=[];
+    linhas.forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
+    return cache[u]={l,d};
+  }catch(e){return {l:[],d:[]};}
 }
 
-function getLogUrl(fileira, mes, ano) {
-  // Use os arquivos de simulação se eles existirem
-  //return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
-  // Ou volte para o original:
-  return `./data/${fileira}_${mes}_${ano}.log`;
+function range(len,per){
+  if(per==='24h')return [Math.max(0,len-24),len];
+  if(per==='7d')return [Math.max(0,len-168),len];
+  if(per==='15d')return [Math.max(0,len-360),len];
+  return [0,len];
 }
 
-async function fetchLog(fileira, mes, ano) {
-  const url = getLogUrl(fileira, mes, ano);
-  if(fileiraCache[url]) return fileiraCache[url];
-  try {
-    const resp = await fetch(url);
-    if(!resp.ok) {
-      console.warn(`Arquivo não encontrado: ${url}`);
-      return {labels: [], umidade: [], eventos: []};
+const upd=()=>{
+  if(th)return; th=1;
+  setTimeout(async()=>{
+    const sel=[...chks].filter(c=>c.checked).map(c=>c.value);
+    let L=[],DS=[],mx=0;
+    for(let f of sel){
+      const {l,d}=await load(f);
+      if(!l.length)continue;
+      const [i,e]=range(l.length,p.value);
+      let ls=l.slice(i,e), ds=d.slice(i,e);
+      if(ds.length>MAX)ds=ds.filter((_,k)=>k%Math.ceil(ds.length/MAX)===0);
+      if(ls.length>mx){mx=ls.length;L=ls;}
+      DS.push({label:f,data:ds,borderColor:cores[files.indexOf(f)],tension:.1,pointRadius:2,fill:false});
     }
-    const text = await resp.text();
-    
-    // CORREÇÃO: Usar '\n' para quebrar linhas
-    const linhas = text.trim().split('\n'); 
-    
-    let labels = [], umidade = [], eventos = [];
-    
-    linhas.forEach((linha, i) => {
-      const partes = linha.trim().split(';');
-      if(partes.length >= 2){
-        // Adiciona verificação para garantir que a linha é de dados
-        if (partes[0].startsWith('202')) { 
-            labels.push(partes[0].trim());
-            umidade.push(parseFloat(partes[1]));
-            if(partes.length > 2 && partes[2]){
-              eventos.push({x: i, status: partes[2].trim()});
-            }
-        }
-      }
-    });
-    fileiraCache[url] = {labels, umidade, eventos};
-    return fileiraCache[url];
-  } catch(e) {console.error(e); return {labels: [], umidade: [], eventos: []};}
-}
+    if(chart)chart.destroy();
+    chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
+      responsive:true,maintainAspectRatio:true,animation:false,
+      plugins:{legend:{display:true}},
+      scales:{y:{min:0,max:100,title:{display:true,text:'%'}}}
+    }});
+    tbl();
+    map();
+    th=0;
+  },10);
+};
 
-function getPeriodRange(labels, periodo) {
-  const total = labels.length;
-  if(periodo === '24h') return [Math.max(0, total - 24), total];
-  if(periodo === '7d') return [Math.max(0, total - 168), total];
-  if(periodo === '15d') return [Math.max(0, total - 360), total];
-  return [0, total];
-}
+const tbl=()=>{
+  const t=document.getElementById('tbl');
+  const r=[{f:'A',c:'baixo'},{f:'B',c:'baixo'},{f:'C',c:'alto'},{f:'D',c:'medio'}];
+  t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.c}">${x.c.toUpperCase()}</td></tr>`).join('');
+};
 
-async function atualizarGrafico() {
-  const mes = mesSelect.value;
-  const ano = anoSelect.value;
-  const periodo = periodoSelect.value;
+const map=()=>{
+  const mp=L.map('map').setView([-23.55,-46.63],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp);
+  const h=[[ -23.548,-46.635,0.2],[ -23.549,-46.630,0.2],[ -23.552,-46.632,1],[ -23.551,-46.637,0.6]];
+  L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mp);
+};
 
-  const checkedFileiras = [...fileiraCheckboxes].filter(c=>c.checked).map(c=>c.value);
-  if(checkedFileiras.length === 0){
-    if(chartInstance){
-      chartInstance.destroy();
-      chartInstance = null;
-    }
-    return;
-  }
-
-  let dataSets = [];
-  let labels = [];
-  let maiorLen = 0;
-
-  for(let i=0; i<checkedFileiras.length; i++){
-    const fileira = checkedFileiras[i];
-    const data = await fetchLog(fileira, mes, ano);
-    if(data.labels.length === 0) continue;
-
-    const [inicio, fim] = getPeriodRange(data.labels, periodo);
-    const labelsSlice = data.labels.slice(inicio, fim);
-    const umidadeSlice = data.umidade.slice(inicio, fim);
-
-    if(labelsSlice.length > maiorLen){
-      maiorLen = labelsSlice.length;
-      labels = labelsSlice;
-    }
-
-    dataSets.push({
-      label: fileira,
-      data: umidadeSlice,
-      borderColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      backgroundColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      fill: false,
-      tension: 0.1,
-      pointRadius: 2
-    });
-  }
-
-  if(chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(graficoUnicoCtx, {
-    type: 'line',
-    data: {labels, datasets: dataSets},
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {display: true}
-      },
-      scales: {
-        x: {
-          type: 'category',
-          title: {display: true, text: 'Data/Hora'},
-          
-          // ############# INÍCIO DA CORREÇÃO #############
-          // O código manual foi removido.
-          // Deixamos o Chart.js escolher os melhores rótulos
-          // com base no maxTicksLimit.
-          ticks: {
-            maxTicksLimit: 12
-          }
-          // ############# FIM DA CORREÇÃO #############
-          
-        },
-        y: {
-          min: 0,
-          max: 100,
-          title: {display: true, text: 'Umidade (%)'}
-        }
-      }
-    }
-  });
-}
-
-// --- LÓGICA DA TABELA PREDITIVA ---
-function popularPrevisao() {
-  const tabela = document.getElementById('risk-forecast-table');
-  
-  // Dados fictícios de previsão
-  const previsoes = [
-    { fileira: "Fileira A", risco: "Baixo", classe: "risk-baixo" },
-    { fileira: "Fileira B", risco: "Baixo", classe: "risk-baixo" },
-    { fileira: "Fileira C", risco: "Alto", classe: "risk-alto" },
-    { fileira: "Fileira D", risco: "Médio", classe: "risk-medio" }
-  ];
-
-  let html = '';
-  previsoes.forEach(p => {
-    html += `
-      <tr>
-        <td>${p.fileira}</td>
-        <td class="${p.classe}">${p.risco}</td>
-      </tr>
-    `;
-  });
-  tabela.innerHTML = html;
-}
-
-/* NOVA FUNÇÃO: Inicializar o Mapa de Calor */
-function inicializarMapaDeCalor() {
-  // Coordenadas fictícias do centro da sua lavoura
-  const centroLavoura = [-23.55, -46.63]; 
-
-  // 1. Inicializa o mapa dentro da div 'risk-map'
-  const map = L.map('risk-map').setView(centroLavoura, 15); // Nível de zoom 15
-
-  // 2. Adiciona o "chão" do mapa (camada de satélite ou ruas)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  // 3. Dados Fictícios (Latitude, Longitude, Intensidade do Risco)
-  const dadosRisco = [
-    [-23.548, -46.635, 0.2], // Fileira A (Risco Baixo = 0.2)
-    [-23.549, -46.630, 0.2], // Fileira B (Risco Baixo = 0.2)
-    [-23.552, -46.632, 1.0], // Fileira C (Risco Alto = 1.0)
-    [-23.551, -46.637, 0.6]  // Fileira D (Risco Médio = 0.6)
-  ];
-
-  // 4. Cria a camada de calor (heatmap)
-  L.heatLayer(dadosRisco, {
-      radius: 25,
-      max: 1.0, // Intensidade máxima (Risco Alto)
-      blur: 15,
-      gradient: { 0.2: 'green', 0.5: 'yellow', 1.0: 'red' } // Gradiente de cores
-  }).addTo(map);
-}
-
-
-// --- INICIALIZAÇÃO ---
-const updateAll = () => { popularPrevisao(); inicializarMapaDeCalor(); atualizarGrafico(); };
-anoSelect.onchange = mesSelect.onchange = periodoSelect.onchange = updateAll;
-fileiraCheckboxes.forEach(c=>c.onclick=updateAll);
-
-// Inicializa gráfico carregando dados
-atualizarGrafico();
-// Inicializa tabela de previsão
-popularPrevisao();
-// Inicializa o mapa de calor
-inicializarMapaDeCalor();
-
+[a,m,p,...chks].forEach(el=>el.onchange=upd);
+upd();
 </script>
 </body>
 </html>
