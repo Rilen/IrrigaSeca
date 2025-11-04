@@ -60,7 +60,7 @@
     content: '';
     display: inline-block;
     width: 14px; height: 14px;
-    background: yellow;
+    background: orange; /* Alterado de yellow para orange para melhor visibilidade */
     border: 1px solid #aaa;
     margin-right: 6px;
     vertical-align: middle;
@@ -170,7 +170,10 @@ for(let i = 0; i < mesSelect.options.length; i++) {
 }
 
 function getLogUrl(fileira, mes, ano) {
-  return `./data/${fileira}_${mes}_${ano}.log`;
+  // Use os arquivos de simulação se eles existirem
+  return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
+  // Ou volte para o original:
+  // return `./data/${fileira}_${mes}_${ano}.log`;
 }
 
 async function fetchLog(fileira, mes, ano) {
@@ -183,15 +186,22 @@ async function fetchLog(fileira, mes, ano) {
       return {labels: [], umidade: [], eventos: []};
     }
     const text = await resp.text();
-    const linhas = text.trim().split('\n');
+    
+    // CORREÇÃO: Usar '\n' para quebrar linhas
+    const linhas = text.trim().split('\n'); 
+    
     let labels = [], umidade = [], eventos = [];
+    
     linhas.forEach((linha, i) => {
       const partes = linha.trim().split(';');
       if(partes.length >= 2){
-        labels.push(partes[0].trim());
-        umidade.push(parseFloat(partes[1]));
-        if(partes.length > 2 && partes[2]){
-          eventos.push({x: i, status: partes[2].trim()});
+        // Adiciona verificação para garantir que a linha é de dados
+        if (partes[0].startsWith('202')) { 
+            labels.push(partes[0].trim());
+            umidade.push(parseFloat(partes[1]));
+            if(partes.length > 2 && partes[2]){
+              eventos.push({x: i, status: partes[2].trim()});
+            }
         }
       }
     });
@@ -270,9 +280,22 @@ async function atualizarGrafico() {
             minRotation: 45,
             maxTicksLimit: 12,
             callback: function(value, index) {
-              if(index === 0 || index === this.getLabels().length - 1) return value;
-              if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
-              return '';
+              const tickLabel = this.getLabels()[index];
+              // Mostrar apenas labels que terminam em "00:00" (meia-noite) ou o primeiro/último
+              if (index === 0 || index === this.getLabels().length - 1) {
+                  return tickLabel;
+              }
+              if (tickLabel && tickLabel.endsWith('00:00:00')) {
+                  // Formatar para mostrar apenas Dia/Mês
+                  try {
+                      const [datePart, timePart] = tickLabel.split(' ');
+                      const [ano, mes, dia] = datePart.split('-');
+                      return `${dia}/${mes}`;
+                  } catch(e) {
+                      return tickLabel; // fallback
+                  }
+              }
+              return ''; // Ocultar outros ticks
             }
           }
         },
