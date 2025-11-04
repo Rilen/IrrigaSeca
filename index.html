@@ -23,10 +23,10 @@
       margin-bottom: 8px;
     }
     .menu-periodo-container {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-bottom: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
     }
     .menu-periodo {
       width: 200px; display:inline-block;
@@ -51,12 +51,13 @@
   
   <div class="menu-periodo-container">
     <label for="mesSelect">Selecione o Mês:
-        <select id="mesSelect" class="menu-periodo">
-            <option value="outubro">Outubro</option>
-            <option value="setembro">Setembro</option>
-            <option value="agosto">Agosto</option>
-            <option value="julho">Julho</option>
-        </select>
+      <select id="mesSelect" class="menu-periodo">
+        <option value="outubro">Outubro</option>
+        <option value="novembro">Novembro</option>
+        <option value="setembro">Setembro</option>
+        <option value="agosto">Agosto</option>
+        <option value="julho">Julho</option>
+      </select>
     </label>
 
     <label for="periodoSelect">Exibir período:
@@ -77,12 +78,11 @@ const cores = ['blue','red','green','orange'];
 const mesSelect = document.getElementById('mesSelect');
 const periodoSelect = document.getElementById('periodoSelect');
 
-// Mapeamento local: Usar caminhos relativos é a solução mais prática
-const getLogUrl = (fileira, mes) => `./${fileira}_${mes}.log`;
+// Usa caminhos relativos baseados no mês para os logs
+const getLogUrl = (fileira, mes) => `./data/${fileira}_${mes}.log`;
 
 let fileiraCache = {};
 
-// Função para buscar e processar logs (inclui a correção do )
 async function fetchFileiraLog(url) {
   const cacheKey = url;
   if(fileiraCache[cacheKey]) return fileiraCache[cacheKey];
@@ -90,37 +90,32 @@ async function fetchFileiraLog(url) {
   try {
     const resp = await fetch(url);
     if (!resp.ok) {
-        console.error(`Falha ao carregar log de ${url}: ${resp.status}`);
-        return { labels: [], umidade: [], eventos: [] };
+      console.error(`Falha ao carregar log de ${url}: ${resp.status}`);
+      return { labels: [], umidade: [], eventos: [] };
     }
     const text = await resp.text();
     const linhas = text.trim().split('\n');
     const labels = [], umidade = [], eventos = [];
     
     linhas.forEach((linha, i) => {
-      // CORREÇÃO: Remove o prefixo de citação ""
-      const cleanLine = linha.replace(/\\s*/, '').trim(); 
+      const cleanLine = linha.trim();
       if (cleanLine.length === 0) return;
 
       const partes = cleanLine.split(';');
       
       if (partes.length >= 2) {
-        labels.push(partes[0].trim()); 
-        
-        // Garante que a umidade é um número e remove o '%' se houver
+        labels.push(partes[0].trim());
         const umidadeStr = partes[1].replace('%', '').trim();
         const umidadeVal = parseFloat(umidadeStr);
         umidade.push(isNaN(umidadeVal) ? null : umidadeVal);
 
-        // Se houver status (terceira coluna)
         if (partes.length >= 3 && partes[2]) {
           eventos.push({ x: i, status: partes[2].trim() });
         }
       }
     });
     
-    // Armazena no cache e retorna
-    fileiraCache[cacheKey] = { labels, umidade, eventos };
+    fileiraCache[cacheKey] = {labels, umidade, eventos};
     return fileiraCache[cacheKey];
   } catch (e) {
     console.error(`Erro durante o fetch ou parsing do log em ${url}:`, e);
@@ -130,32 +125,30 @@ async function fetchFileiraLog(url) {
 
 function getPeriodIndices(labels, period) {
   const total = labels.length;
-  // Assume 24 leituras por dia
-  if(period==='24h') return [Math.max(0,total-24), total];
-  if(period==='7d') return [Math.max(0,total-24*7), total];
-  if(period==='15d') return [Math.max(0,total-24*15), total];
-  return [0,total]; // 'all' (todo o mês)
+  if(period === '24h') return [Math.max(0,total-24), total];
+  if(period === '7d') return [Math.max(0,total-24*7), total];
+  if(period === '15d') return [Math.max(0,total-24*15), total];
+  return [0,total];
 }
 
 function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   
-  // Mapeia eventos
   const eventData_ON = eventos.filter(e => e.status === 'RELE_ON').map(e => ({ x: labels[e.x], y: umidade[e.x] }));
   const eventData_OFF = eventos.filter(e => e.status === 'RELE_OFF').map(e => ({ x: labels[e.x], y: umidade[e.x] }));
-  const umidadePlotData = labels.map((l, i) => ({ x: l, y: umidade[i] }));
   
-  const existingChart = Chart.getChart(canvasId);
-  if (existingChart) existingChart.destroy();
-  
+  if (Chart.getChart(canvasId)) {
+    Chart.getChart(canvasId).destroy();
+  }
+
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels, 
+      labels: labels,
       datasets: [
         {
           label: 'Umidade (%)',
-          data: umidadePlotData, 
+          data: umidade,
           borderColor: cor,
           backgroundColor: cor,
           pointRadius: 2,
@@ -189,22 +182,20 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
       maintainAspectRatio: false,
       scales: {
         x: { 
-            type: 'category', 
-            title: { display: true, text: 'Data/Hora' }, 
-            ticks: { 
-                maxRotation: 60, 
-                minRotation: 45, 
-                maxTicksLimit: 12,
-                callback: function(value, index, values) {
-                    return index % Math.ceil(labels.length / 12) === 0 ? value : ''; 
-                }
-            } 
+          type: 'category', 
+          title: { display: true, text: 'Data/Hora' }, 
+          ticks: { 
+            maxRotation: 60, 
+            minRotation: 45, 
+            maxTicksLimit: 12,
+            callback: function(value, index) {
+              if (index === 0 || index === this.getLabels().length - 1) return value;
+              if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
+              return '';
+            }
+          }
         },
-        y: { 
-            beginAtZero: true, 
-            max: 40, // Mantido o max de 40%
-            title: { display: true, text: 'Umidade (%)' } 
-        }
+        y: { min: 0, max: 40, title: { display: true, text: 'Umidade (%)' } }
       }
     }
   });
@@ -214,69 +205,53 @@ async function desenhaGraficos() {
   const mes = mesSelect.value;
   const periodo = periodoSelect.value;
   const container = document.getElementById('graficos');
-  container.innerHTML = 'Carregando dados...';
-  
-  // Destruir gráficos existentes antes de desenhar novos
-  fileiras.forEach(f => {
-    const existingChart = Chart.getChart(`canvas_${f}`);
-    if (existingChart) existingChart.destroy();
-  });
+  container.innerHTML = '';
 
-  let hasData = false;
-  
   for(let i=0; i<fileiras.length; i++) {
     const fileira = fileiras[i];
     const url = getLogUrl(fileira, mes);
-    
-    // Tenta carregar o log (se não estiver em cache)
     const data = await fetchFileiraLog(url);
-
-    if(data.labels.length > 0) {
-        hasData = true;
-        // Filtra os dados de acordo com o período, baseado no índice (assumindo entradas horárias)
-        let [ini, fim] = getPeriodIndices(data.labels, periodo);
-        
-        const labelsRecorte = data.labels.slice(ini, fim);
-        const umidadeRecorte = data.umidade.slice(ini, fim);
-        
-        // Ajustar os índices dos eventos ao novo intervalo, mapeando para o novo índice 'x'
-        const eventosRecorte = data.eventos
-                                   .filter(ev => ev.x >= ini && ev.x < fim)
-                                   .map(ev => ({ x: ev.x - ini, status: ev.status })); 
-
-        const titulo = `Fileira ${String.fromCharCode(65+i)} (${fileira}) - ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
-        const canvasId = `canvas_${fileira}_${mes}`;
-        const div = document.createElement('div');
-        div.className = 'graficos-fileira';
-        div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
-<canvas id="${canvasId}" height="400"></canvas>`;
-        container.appendChild(div);
-        
-        // CORREÇÃO CRÍTICA: A função plotFileira agora precisa dos rótulos *originais* para mapear X e Y corretamente.
-        // O scatterplot espera o valor real do eixo X (o rótulo da data).
-        plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
-    } else {
-        const div = document.createElement('div');
-        div.className = 'graficos-fileira';
-        div.innerHTML = `<div class="grafico-titulo"><b>Fileira ${String.fromCharCode(65+i)} (${fileira}) - ${mes.charAt(0).toUpperCase() + mes.slice(1)}</b></div><p style="color: orange; text-align: center;">Sem dados para exibir para o mês selecionado.</p>`;
-        container.appendChild(div);
+    
+    if(data.labels.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'graficos-fileira';
+      div.innerHTML = `<div class="grafico-titulo"><b>Fileira ${String.fromCharCode(65+i)} (${fileira}) - ${mes.charAt(0).toUpperCase()+mes.slice(1)}</b></div>
+                       <p style="color: orange; text-align: center;">Sem dados para o mês selecionado.</p>`;
+      container.appendChild(div);
+      continue;
     }
-  }
 
-  if (!hasData) {
-     container.innerHTML = `<p style="color: red; text-align: center;">Nenhum dado encontrado para o mês de ${mes.charAt(0).toUpperCase() + mes.slice(1)}.</p>`;
+    const [ini, fim] = getPeriodIndices(data.labels, periodo);
+    const labelsRecorte = data.labels.slice(ini,fim);
+    const umidadeRecorte = data.umidade.slice(ini,fim);
+    const eventosRecorte = data.eventos.filter(ev => ev.x >= ini && ev.x < fim)
+                                         .map(ev => ({ x: ev.x - ini, status: ev.status }));
+    const titulo = `Fileira ${String.fromCharCode(65+i)} (${fileira}) - ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
+    const canvasId = `canvas_${fileira}_${mes}`;
+    const div = document.createElement('div');
+    div.className = 'graficos-fileira';
+    div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
+                     <canvas id="${canvasId}" height="400"></canvas>`;
+    container.appendChild(div);
+    plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
   }
 }
 
-mesSelect.addEventListener('change', function(){
-  desenhaGraficos();
-});
+// Define o mês atual automaticamente no seletor
+const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long' }).toLowerCase();
+for(let i=0; i < mesSelect.options.length; i++) {
+  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
+    mesSelect.selectedIndex = i;
+    break;
+  }
+}
 
-periodoSelect.addEventListener('change', function(){
-  desenhaGraficos();
-});
+// Atualiza gráficos ao alterar seletor
+mesSelect.addEventListener('change', desenhaGraficos);
+periodoSelect.addEventListener('change', desenhaGraficos);
 
-desenhaGraficos(); // Carrega o mês padrão (Outubro) ao iniciar.
+// Carrega gráficos inicialmente
+desenhaGraficos();
 </script>
 </body>
 </html>
