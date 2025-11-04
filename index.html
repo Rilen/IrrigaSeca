@@ -52,8 +52,13 @@
       <option>dezembro</option>
     </select></label></div>
     <div><label>Período:<select id="p">
-      <option value="24h">24h</option><option value="7d">7d</option>
-      <option value="15d">15d</option><option value="all" selected>Tudo</option>
+      <option value="24h">24 horas</option>
+      <option value="7d">7 dias</option>
+      <option value="15d">15 dias</option>
+      <option value="30d">30 dias</option>
+      <option value="60d">60 dias</option>
+      <option value="90d">90 dias</option>
+      <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
       <label id="fA"><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
@@ -108,6 +113,9 @@ function range(len,per){
   if(per==='24h')return [Math.max(0,len-24),len];
   if(per==='7d')return [Math.max(0,len-168),len];
   if(per==='15d')return [Math.max(0,len-360),len];
+  if(per==='30d')return [Math.max(0,len-720),len];
+  if(per==='60d')return [Math.max(0,len-1440),len];
+  if(per==='90d')return [Math.max(0,len-2160),len];
   return [0,len];
 }
 
@@ -151,7 +159,7 @@ const map=()=>{
 };
 
 // NOVO (funciona em celular)
-[a,m,p,...chks].forEach(el=>el.addEventListener('change',upd));
+[a,m,p,...chks].forEach(el=>el.onclick=upd);
 upd();
 </script>
 </body>
