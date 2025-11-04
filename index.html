@@ -183,7 +183,7 @@ async function fetchLog(fileira, mes, ano) {
       return {labels: [], umidade: [], eventos: []};
     }
     const text = await resp.text();
-    const linhas = text.trim().split('\\n');
+    const linhas = text.trim().split('\n');
     let labels = [], umidade = [], eventos = [];
     linhas.forEach((linha, i) => {
       const partes = linha.trim().split(';');
