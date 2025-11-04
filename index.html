@@ -141,9 +141,7 @@
   .risk-medio { color: #F0AD4E; }
   .risk-baixo { color: #5CB85C; }
 
-  /* CSS ATUALIZADO PARA O MAPA
-    (Removemos o CSS do placeholder)
-  */
+  /* CSS ATUALIZADO PARA O MAPA */
   #risk-map {
     height: 300px; /* Altura do mapa */
     width: 100%;
@@ -365,29 +363,16 @@ async function atualizarGrafico() {
         x: {
           type: 'category',
           title: {display: true, text: 'Data/Hora'},
+          
+          // ############# INÍCIO DA CORREÇÃO #############
+          // O código manual foi removido.
+          // Deixamos o Chart.js escolher os melhores rótulos
+          // com base no maxTicksLimit.
           ticks: {
-            maxRotation: 60,
-            minRotation: 45,
-            maxTicksLimit: 12,
-            callback: function(value, index) {
-              const tickLabel = this.getLabels()[index];
-              // Mostrar apenas labels que terminam em "00:00" (meia-noite) ou o primeiro/último
-              if (index === 0 || index === this.getLabels().length - 1) {
-                  return tickLabel;
-              }
-              if (tickLabel && tickLabel.endsWith('00:00:00')) {
-                  // Formatar para mostrar apenas Dia/Mês
-                  try {
-                      const [datePart, timePart] = tickLabel.split(' ');
-                      const [ano, mes, dia] = datePart.split('-');
-                      return `${dia}/${mes}`;
-                  } catch(e) {
-                      return tickLabel; // fallback
-                  }
-              }
-              return ''; // Ocultar outros ticks
-            }
+            maxTicksLimit: 12
           }
+          // ############# FIM DA CORREÇÃO #############
+          
         },
         y: {
           min: 0,
@@ -423,9 +408,7 @@ function popularPrevisao() {
   tabela.innerHTML = html;
 }
 
-/* NOVA FUNÇÃO: Inicializar o Mapa de Calor
-  (Isso substitui o seu "placeholder")
-*/
+/* NOVA FUNÇÃO: Inicializar o Mapa de Calor */
 function inicializarMapaDeCalor() {
   // Coordenadas fictícias do centro da sua lavoura
   const centroLavoura = [-23.55, -46.63]; 
@@ -434,13 +417,11 @@ function inicializarMapaDeCalor() {
   const map = L.map('risk-map').setView(centroLavoura, 15); // Nível de zoom 15
 
   // 2. Adiciona o "chão" do mapa (camada de satélite ou ruas)
-  L.tileLayer('https_//_tile_openstreetmap_org_/{z}/{x}/{y}.png', { // Substituído para não ser um link
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   // 3. Dados Fictícios (Latitude, Longitude, Intensidade do Risco)
-  //    No seu projeto real, seu modelo de ML (Python) 
-  //    geraria esses pontos (ou um GeoJSON)
   const dadosRisco = [
     [-23.548, -46.635, 0.2], // Fileira A (Risco Baixo = 0.2)
     [-23.549, -46.630, 0.2], // Fileira B (Risco Baixo = 0.2)
