@@ -441,10 +441,9 @@ function inicializarMapaDeCalor() {
 
 
 // --- INICIALIZAÇÃO ---
-anoSelect.addEventListener('change', atualizarGrafico);
-mesSelect.addEventListener('change', atualizarGrafico);
-periodoSelect.addEventListener('change', atualizarGrafico);
-fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico));
+const updateAll = () => { popularPrevisao(); inicializarMapaDeCalor(); atualizarGrafico(); };
+anoSelect.onchange = mesSelect.onchange = periodoSelect.onchange = updateAll;
+fileiraCheckboxes.forEach(c=>c.onclick=updateAll);
 
 // Inicializa gráfico carregando dados
 atualizarGrafico();
