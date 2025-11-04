@@ -1,298 +1,314 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard Fileiras - Gráfico Único com Filtros</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; justify-content: center;
-  }
-  #container {
-    max-width: 1200px; width: 100%;
-  }
-  h2 { text-align: center; }
-  .menu-container {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-  }
-  .menu-block {
-    text-align: left;
-    max-width: 200px;
-  }
-  .fileira-checkboxes label {
-    display: block;
-    margin: 4px 0;
-    cursor: pointer;
-  }
-  /* Cores para os checkboxes na label */
-  .fileira-checkboxes label input[value="fileiraA"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: blue;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraB"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: red;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraC"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: green;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraD"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: yellow;
-    border: 1px solid #aaa;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  /* Esconde checkbox padrão */
-  .fileira-checkboxes input[type="checkbox"] {
-    display: none;
-  }
-  /* Estilo customizado para o checkbox */
-  .fileira-checkboxes input[type="checkbox"]:checked + span {
-    font-weight: bold;
-  }
-  canvas {
-    width: 80vw !important;
-    max-width: 80vw !important;
-    min-width: 400px;
-    height: 450px !important;
-    min-height: 450px !important;
-    display: block;
-    margin: 0 auto 30px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(150,150,150,0.1);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Fileiras - Irrigação Sensor Único</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 20px;
+      display: flex; justify-content: center;
+      background-color: #f7f7f7;
+    }
+    #container {
+      max-width: 1200px; width: 100%;
+    }
+    h2 { text-align: center; color: #333; }
+    .graficos-fileira {
+      margin-bottom: 50px;
+      text-align: center;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .grafico-titulo {
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      color: #555;
+    }
+    .menu-periodo-container {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding: 10px;
+        background: #eee;
+        border-radius: 6px;
+    }
+    .menu-periodo {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    canvas {
+      max-width: 100%;
+      height: 400px !important;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
 <div id="container">
-  <h2>Umidade por Fileiras - Gráfico Único</h2>
+  <h2>Monitoramento de Umidade por Fileira<br />Irrigação Automática • Sensor único a 20cm</h2>
+  
+  <div class="menu-periodo-container">
+    <label for="mesSelect">Selecione o Mês:
+        <select id="mesSelect" class="menu-periodo">
+            <option value="novembro">Novembro</option>
+            <option value="outubro">Outubro</option>
+            <option value="setembro">Setembro</option>
+            <option value="agosto">Agosto</option>
+            <option value="julho">Julho</option>
+        </select>
+    </label>
 
-  <div class="menu-container">
-    <div class="menu-block">
-      <label for="anoSelect">Ano:</label>
-      <select id="anoSelect"></select>
-    </div>
-    <div class="menu-block">
-      <label for="mesSelect">Mês:</label>
-      <select id="mesSelect">
-        <option value="janeiro">Janeiro</option>
-        <option value="fevereiro">Fevereiro</option>
-        <option value="marco">Março</option>
-        <option value="abril">Abril</option>
-        <option value="maio">Maio</option>
-        <option value="junho">Junho</option>
-        <option value="julho">Julho</option>
-        <option value="agosto">Agosto</option>
-        <option value="setembro">Setembro</option>
-        <option value="outubro">Outubro</option>
-        <option value="novembro" selected>Novembro</option>
-        <option value="dezembro">Dezembro</option>
-      </select>
-    </div>
-    <div class="menu-block">
-      <label for="periodoSelect">Período:</label>
-      <select id="periodoSelect">
+    <label for="periodoSelect">Exibir período:
+      <select id="periodoSelect" class="menu-periodo">
         <option value="24h">Últimas 24h</option>
-        <option value="7d">Última semana</option>
-        <option value="15d">Últimos 15 dias</option>
-        <option value="all" selected>Todo o mês</option>
+        <option value="7d">1 semana</option>
+        <option value="15d">15 dias</option>
+        <option value="all">Todo o Mês</option>
       </select>
-    </div>
-    <div class="menu-block fileira-checkboxes">
-      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
-      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
-      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
-      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
-    </div>
+    </label>
   </div>
-
-  <canvas id="graficoUnico"></canvas>
+  
+  <div id="graficos"></div>
 </div>
 <script>
-const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
-const cores = ['blue', 'red', 'green', 'orange'];
-
-const anoSelect = document.getElementById('anoSelect');
+const fileiras = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
+const cores = ['#007bff','#dc3545','#28a745','#ffc107']; // Cores atualizadas
 const mesSelect = document.getElementById('mesSelect');
 const periodoSelect = document.getElementById('periodoSelect');
-const graficoUnicoCtx = document.getElementById('graficoUnico').getContext('2d');
-const fileiraCheckboxes = document.querySelectorAll('.fileira-checkboxes input[type=checkbox]');
+
+// CORREÇÃO CRÍTICA: Ajusta o nome do arquivo para corresponder ao formato enviado
+const getLogUrl = (fileira, mes) => {
+    // Note que o nome do arquivo inclui o ano fixo (ex: fileiraA_novembro_2025.log)
+    const ano = 2025; 
+    return `./${fileira}_${mes}_${ano}.log`; 
+};
 
 let fileiraCache = {};
-let chartInstance = null;
 
-// Popula menu de anos dinamicamente (2022 - 2027)
-function popularAnos() {
-  const anoInicio = 2022;
-  const anoFim = 2027;
-  const anoAtual = new Date().getFullYear();
-  for(let ano=anoInicio; ano <= anoFim; ano++){
-    const option = document.createElement('option');
-    option.value = ano;
-    option.textContent = ano;
-    if(ano === anoAtual) option.selected = true;
-    anoSelect.appendChild(option);
-  }
-}
-popularAnos();
+// Função para buscar e processar logs (inclui a correção do e cache)
+async function fetchFileiraLog(url) {
+  const cacheKey = url;
+  if(fileiraCache[cacheKey]) return fileiraCache[cacheKey];
 
-// Seleciona automaticamente o mês atual no select
-const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long'}).toLowerCase();
-for(let i = 0; i < mesSelect.options.length; i++) {
-  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
-    mesSelect.selectedIndex = i;
-    break;
-  }
-}
-
-function getLogUrl(fileira, mes, ano) {
-  return `./data/${fileira}_${mes}_${ano}.log`;
-}
-
-async function fetchLog(fileira, mes, ano) {
-  const url = getLogUrl(fileira, mes, ano);
-  if(fileiraCache[url]) return fileiraCache[url];
   try {
     const resp = await fetch(url);
-    if(!resp.ok) {
-      console.warn(`Arquivo não encontrado: ${url}`);
-      return {labels: [], umidade: [], eventos: []};
+    if (!resp.ok) {
+        // Se a busca falhar (e.g., arquivo não existe), retorna vazio sem logar erro 404
+        if (resp.status !== 404) {
+             console.error(`Falha ao carregar log de ${url}: ${resp.status}`);
+        }
+        return { labels: [], umidade: [], eventos: [] };
     }
     const text = await resp.text();
-    const linhas = text.trim().split('\\n');
-    let labels = [], umidade = [], eventos = [];
+    // Usa uma regex mais robusta para split em nova linha, lidando com diferentes OS
+    const linhas = text.trim().split(/\r?\n/);
+    const labels = [], umidade = [], eventos = [];
+    
     linhas.forEach((linha, i) => {
-      const partes = linha.trim().split(';');
-      if(partes.length >= 2){
-        labels.push(partes[0].trim());
-        umidade.push(parseFloat(partes[1]));
-        if(partes.length > 2 && partes[2]){
-          eventos.push({x: i, status: partes[2].trim()});
+      // CORREÇÃO: Remove o prefixo de citação "" que estava nos logs
+      const cleanLine = linha.replace(/\\s*/, '').trim(); 
+      if (cleanLine.length === 0) return;
+
+      const partes = cleanLine.split(';');
+      
+      if (partes.length >= 2) {
+        labels.push(partes[0].trim()); 
+        
+        // Garante que a umidade é um número e remove o '%' se houver (para flexibilidade)
+        const umidadeStr = partes[1].replace('%', '').trim();
+        const umidadeVal = parseFloat(umidadeStr);
+        umidade.push(isNaN(umidadeVal) ? null : umidadeVal);
+
+        // Se houver status (terceira coluna), o índice é relativo ao array processado
+        if (partes.length >= 3 && partes[2]) {
+          eventos.push({ x: i, status: partes[2].trim() });
         }
       }
     });
-    fileiraCache[url] = {labels, umidade, eventos};
-    return fileiraCache[url];
-  } catch(e) {console.error(e); return {labels: [], umidade: [], eventos: []};}
+    
+    // Armazena no cache e retorna
+    fileiraCache[cacheKey] = { labels, umidade, eventos };
+    return fileiraCache[cacheKey];
+  } catch (e) {
+    console.error(`Erro durante o fetch ou parsing do log em ${url}:`, e);
+    return { labels: [], umidade: [], eventos: [] };
+  }
 }
 
-function getPeriodRange(labels, periodo) {
+function getPeriodIndices(labels, period) {
   const total = labels.length;
-  if(periodo === '24h') return [Math.max(0, total - 24), total];
-  if(periodo === '7d') return [Math.max(0, total - 168), total];
-  if(periodo === '15d') return [Math.max(0, total - 360), total];
-  return [0, total];
+  // Assumindo leituras horárias (24 por dia)
+  if(period==='24h') return [Math.max(0,total-24), total];
+  if(period==='7d') return [Math.max(0,total-24*7), total];
+  if(period==='15d') return [Math.max(0,total-24*15), total];
+  return [0,total]; // 'all' (todo o mês)
 }
 
-async function atualizarGrafico() {
-  const mes = mesSelect.value;
-  const ano = anoSelect.value;
-  const periodo = periodoSelect.value;
+function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  // Mapeia eventos para as strings de data/hora (label) e valores de umidade
+  // Note que aqui 'x' e 'y' são usados para o scatter plot.
+  const umidadePlotData = labels.map((l, i) => ({ x: l, y: umidade[i] }));
 
-  const checkedFileiras = [...fileiraCheckboxes].filter(c=>c.checked).map(c=>c.value);
-  if(checkedFileiras.length === 0){
-    if(chartInstance){
-      chartInstance.destroy();
-      chartInstance = null;
-    }
-    return;
-  }
-
-  let dataSets = [];
-  let labels = [];
-  let maiorLen = 0;
-
-  for(let i=0; i<checkedFileiras.length; i++){
-    const fileira = checkedFileiras[i];
-    const data = await fetchLog(fileira, mes, ano);
-    if(data.labels.length === 0) continue;
-
-    const [inicio, fim] = getPeriodRange(data.labels, periodo);
-    const labelsSlice = data.labels.slice(inicio, fim);
-    const umidadeSlice = data.umidade.slice(inicio, fim);
-
-    if(labelsSlice.length > maiorLen){
-      maiorLen = labelsSlice.length;
-      labels = labelsSlice;
-    }
-
-    dataSets.push({
-      label: fileira,
-      data: umidadeSlice,
-      borderColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      backgroundColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      fill: false,
-      tension: 0.1,
-      pointRadius: 2
-    });
-  }
-
-  if(chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(graficoUnicoCtx, {
+  const eventData_ON = eventos
+      .filter(e => e.status === 'RELE_ON' && umidade[e.x] !== null)
+      .map(e => ({ x: labels[e.x], y: umidade[e.x] }));
+      
+  const eventData_OFF = eventos
+      .filter(e => e.status === 'RELE_OFF' && umidade[e.x] !== null)
+      .map(e => ({ x: labels[e.x], y: umidade[e.x] }));
+  
+  const existingChart = Chart.getChart(canvasId);
+  if (existingChart) existingChart.destroy();
+  
+  new Chart(ctx, {
     type: 'line',
-    data: {labels, datasets: dataSets},
+    data: {
+      labels: labels, 
+      datasets: [
+        {
+          label: 'Umidade (%)',
+          data: umidadePlotData, 
+          borderColor: cor,
+          backgroundColor: cor,
+          pointRadius: 1, // Raio menor para a linha
+          fill: false,
+          tension: 0.1,
+          parsing: false // Informamos que passamos {x, y} e não confiamos no label index
+        },
+        {
+          type: 'scatter',
+          label: 'RELE_ON',
+          data: eventData_ON,
+          borderColor: 'black',
+          backgroundColor: 'red',
+          pointRadius: 4,
+          pointStyle: 'triangle',
+          showLine: false,
+        },
+        {
+          type: 'scatter',
+          label: 'RELE_OFF',
+          data: eventData_OFF,
+          borderColor: 'black',
+          backgroundColor: 'green',
+          pointStyle: 'rectRot',
+          pointRadius: 4,
+          showLine: false,
+        }
+      ]
+    },
     options: {
+      plugins: { legend: { display: true } },
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: {display: true}
-      },
       scales: {
-        x: {
-          type: 'category',
-          title: {display: true, text: 'Data/Hora'},
-          ticks: {
-            maxRotation: 60,
-            minRotation: 45,
-            maxTicksLimit: 12,
-            callback: function(value, index) {
-              if(index === 0 || index === this.getLabels().length - 1) return value;
-              if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
-              return '';
-            }
-          }
+        x: { 
+            type: 'category', 
+            title: { display: true, text: 'Data/Hora' }, 
+            ticks: { 
+                maxRotation: 60, 
+                minRotation: 45, 
+                maxTicksLimit: 12,
+                // Exibe uma fração dos rótulos para melhor legibilidade
+                callback: function(value, index, values) {
+                    return index % Math.ceil(labels.length / 12) === 0 ? value : ''; 
+                }
+            } 
         },
-        y: {
-          min: 0,
-          max: 40,
-          title: {display: true, text: 'Umidade (%)'}
+        y: { 
+            beginAtZero: true, 
+            max: 40, // Mantido o max de 40% (limite de umidade)
+            title: { display: true, text: 'Umidade (%)' } 
         }
       }
     }
   });
 }
 
-anoSelect.addEventListener('change', atualizarGrafico);
-mesSelect.addEventListener('change', atualizarGrafico);
-periodoSelect.addEventListener('change', atualizarGrafico);
-fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico));
+async function desenhaGraficos() {
+  const mes = mesSelect.value;
+  const periodo = periodoSelect.value;
+  const container = document.getElementById('graficos');
+  container.innerHTML = '<p style="text-align: center; color: #555;">Carregando dados...</p>';
+  
+  let hasData = false;
+  let allDataLoaded = true;
+  
+  for(let i=0; i<fileiras.length; i++) {
+    const fileira = fileiras[i];
+    const url = getLogUrl(fileira, mes);
+    
+    // Tenta carregar o log
+    const data = await fetchFileiraLog(url);
 
-// Inicializa gráfico carregando dados
-atualizarGrafico();
+    if(data.labels.length > 0) {
+        hasData = true;
+        
+        // Filtra os dados de acordo com o período, baseado no índice
+        let [ini, fim] = getPeriodIndices(data.labels, periodo);
+        
+        const labelsRecorte = data.labels.slice(ini, fim);
+        const umidadeRecorte = data.umidade.slice(ini, fim);
+        
+        // Ajustar os índices dos eventos ao novo intervalo
+        const eventosRecorte = data.eventos
+                                   .filter(ev => ev.x >= ini && ev.x < fim)
+                                   .map(ev => ({x: ev.x - ini, status: ev.status})); 
+
+        const titulo = `${fileira.charAt(0).toUpperCase() + fileira.slice(1)} - ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
+        const canvasId = `canvas_${fileira}_${mes}`;
+        const div = document.createElement('div');
+        div.className = 'graficos-fileira';
+        div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div>
+<canvas id="${canvasId}" height="400"></canvas>`;
+        container.appendChild(div);
+        
+        // Passa os dados recortados para a função de plotagem
+        plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
+    } else {
+        allDataLoaded = false;
+        const div = document.createElement('div');
+        div.className = 'graficos-fileira';
+        div.innerHTML = `<div class="grafico-titulo"><b>${fileira.charAt(0).toUpperCase() + fileira.slice(1)} - ${mes.charAt(0).toUpperCase() + mes.slice(1)}</b></div><p style="color: #dc3545; text-align: center;">Arquivo de log não encontrado: ${url.split('./')[1]}</p>`;
+        container.appendChild(div);
+    }
+  }
+
+  if (allDataLoaded) {
+     // Se todos carregaram, limpa a mensagem de aviso (se houver)
+     // Nota: O loop já preencheu os gráficos e as divs. Se hasData for true,
+     // a página já está preenchida com os gráficos.
+  } else if (!hasData) {
+     container.innerHTML = '<p style="color: red; text-align: center;">Nenhum dado encontrado para as fileiras selecionadas. Verifique se os arquivos de log estão na pasta correta.</p>';
+  }
+}
+
+// Event Listeners
+mesSelect.addEventListener('change', function(){
+  desenhaGraficos();
+});
+
+periodoSelect.addEventListener('change', function(){
+  desenhaGraficos();
+});
+
+// Inicia o dashboard no mês padrão (Novembro)
+document.addEventListener('DOMContentLoaded', function() {
+    desenhaGraficos();
+});
 </script>
 </body>
 </html>
