@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard Fileiras - Gráfico Único com Filtros</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; justify-content: center;
+  }
+  #container {
+    max-width: 1200px; width: 100%;
+  }
+  h2 { text-align: center; }
+  .menu-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+  .menu-block {
+    text-align: left;
+    max-width: 200px;
+  }
+  .fileira-checkboxes label {
+    display: block;
+    margin: 4px 0;
+    cursor: pointer;
+  }
+  /* Cores para os checkboxes na label */
+  .fileira-checkboxes label input[value="fileiraA"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: blue;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraB"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: red;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraC"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: green;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraD"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: yellow;
+    border: 1px solid #aaa;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  /* Esconde checkbox padrão */
+  .fileira-checkboxes input[type="checkbox"] {
+    display: none;
+  }
+  /* Estilo customizado para o checkbox */
+  .fileira-checkboxes input[type="checkbox"]:checked + span {
+    font-weight: bold;
+  }
+  canvas {
+    width: 80vw !important;
+    max-width: 80vw !important;
+    min-width: 400px;
+    height: 450px !important;
+    min-height: 450px !important;
+    display: block;
+    margin: 0 auto 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(150,150,150,0.1);
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <h2>Umidade por Fileiras - Gráfico Único</h2>
+
+  <div class="menu-container">
+    <div class="menu-block">
+      <label for="anoSelect">Ano:</label>
+      <select id="anoSelect"></select>
+    </div>
+    <div class="menu-block">
+      <label for="mesSelect">Mês:</label>
+      <select id="mesSelect">
+        <option value="janeiro">Janeiro</option>
+        <option value="fevereiro">Fevereiro</option>
+        <option value="marco">Março</option>
+        <option value="abril">Abril</option>
+        <option value="maio">Maio</option>
+        <option value="junho">Junho</option>
+        <option value="julho">Julho</option>
+        <option value="agosto">Agosto</option>
+        <option value="setembro">Setembro</option>
+        <option value="outubro">Outubro</option>
+        <option value="novembro" selected>Novembro</option>
+        <option value="dezembro">Dezembro</option>
+      </select>
+    </div>
+    <div class="menu-block">
+      <label for="periodoSelect">Período:</label>
+      <select id="periodoSelect">
+        <option value="24h">Últimas 24h</option>
+        <option value="7d">Última semana</option>
+        <option value="15d">Últimos 15 dias</option>
+        <option value="all" selected>Todo o mês</option>
+      </select>
+    </div>
+    <div class="menu-block fileira-checkboxes">
+      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
+      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
+      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
+      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
+    </div>
+  </div>
+
+  <canvas id="graficoUnico"></canvas>
+</div>
+<script>
+const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
+const cores = ['blue', 'red', 'green', 'orange'];
+
+const anoSelect = document.getElementById('anoSelect');
+const mesSelect = document.getElementById('mesSelect');
+const periodoSelect = document.getElementById('periodoSelect');
+const graficoUnicoCtx = document.getElementById('graficoUnico').getContext('2d');
+const fileiraCheckboxes = document.querySelectorAll('.fileira-checkboxes input[type=checkbox]');
+
+let fileiraCache = {};
+let chartInstance = null;
+
+// Popula menu de anos dinamicamente (2022 - 2027)
+function popularAnos() {
+  const anoInicio = 2022;
+  const anoFim = 2027;
+  const anoAtual = new Date().getFullYear();
+  for(let ano=anoInicio; ano <= anoFim; ano++){
+    const option = document.createElement('option');
+    option.value = ano;
+    option.textContent = ano;
+    if(ano === anoAtual) option.selected = true;
+    anoSelect.appendChild(option);
+  }
+}
+popularAnos();
+
+// Seleciona automaticamente o mês atual no select
+const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long'}).toLowerCase();
+for(let i = 0; i < mesSelect.options.length; i++) {
+  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
+    mesSelect.selectedIndex = i;
+    break;
+  }
+}
+
+function getLogUrl(fileira, mes, ano) {
+  return `./data/${fileira}_${mes}_${ano}.log`;
+}
+
+async function fetchLog(fileira, mes, ano) {
+  const url = getLogUrl(fileira, mes, ano);
+  if(fileiraCache[url]) return fileiraCache[url];
+  try {
+    const resp = await fetch(url);
+    if(!resp.ok) {
+      console.warn(`Arquivo não encontrado: ${url}`);
+      return {labels: [], umidade: [], eventos: []};
+    }
+    const text = await resp.text();
+    const linhas = text.trim().split('\n');
+    let labels = [], umidade = [], eventos = [];
+    linhas.forEach((linha, i) => {
+      const partes = linha.trim().split(';');
+      if(partes.length >= 2){
+        labels.push(partes[0].trim());
+        umidade.push(parseFloat(partes[1]));
+        if(partes.length > 2 && partes[2]){
+          eventos.push({x: i, status: partes[2].trim()});
+        }
+      }
+    });
+    fileiraCache[url] = {labels, umidade, eventos};
+    return fileiraCache[url];
+  } catch(e) {console.error(e); return {labels: [], umidade: [], eventos: []};}
+}
+
+function getPeriodRange(labels, periodo) {
+  const total = labels.length;
+  if(periodo === '24h') return [Math.max(0, total - 24), total];
+  if(periodo === '7d') return [Math.max(0, total - 168), total];
+  if(periodo === '15d') return [Math.max(0, total - 360), total];
+  return [0, total];
+}
+
+async function atualizarGrafico() {
+  const mes = mesSelect.value;
+  const ano = anoSelect.value;
+  const periodo = periodoSelect.value;
+
+  const checkedFileiras = [...fileiraCheckboxes].filter(c=>c.checked).map(c=>c.value);
+  if(checkedFileiras.length === 0){
+    if(chartInstance){
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+    return;
+  }
+
+  let dataSets = [];
+  let labels = [];
+  let maiorLen = 0;
+
+  for(let i=0; i<checkedFileiras.length; i++){
+    const fileira = checkedFileiras[i];
+    const data = await fetchLog(fileira, mes, ano);
+    if(data.labels.length === 0) continue;
+
+    const [inicio, fim] = getPeriodRange(data.labels, periodo);
+    const labelsSlice = data.labels.slice(inicio, fim);
+    const umidadeSlice = data.umidade.slice(inicio, fim);
+
+    if(labelsSlice.length > maiorLen){
+      maiorLen = labelsSlice.length;
+      labels = labelsSlice;
+    }
+
+    dataSets.push({
+      label: fileira,
+      data: umidadeSlice,
+      borderColor: cores[fileirasAll.indexOf(fileira) % cores.length],
+      backgroundColor: cores[fileirasAll.indexOf(fileira) % cores.length],
+      fill: false,
+      tension: 0.1,
+      pointRadius: 2
+    });
+  }
+
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(graficoUnicoCtx, {
+    type: 'line',
+    data: {labels, datasets: dataSets},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {display: true}
+      },
+      scales: {
+        x: {
+          type: 'category',
+          title: {display: true, text: 'Data/Hora'},
+          ticks: {
+            maxRotation: 60,
+            minRotation: 45,
+            maxTicksLimit: 12,
+            callback: function(value, index) {
+              if(index === 0 || index === this.getLabels().length - 1) return value;
+              if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
+              return '';
+            }
+          }
+        },
+        y: {
+          min: 0,
+          max: 40,
+          title: {display: true, text: 'Umidade (%)'}
+        }
+      }
+    }
+  });
+}
+
+anoSelect.addEventListener('change', atualizarGrafico);
+mesSelect.addEventListener('change', atualizarGrafico);
+periodoSelect.addEventListener('change', atualizarGrafico);
+fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico));
+
+// Inicializa gráfico carregando dados
+atualizarGrafico();
+</script>
+</body>
+</html>
