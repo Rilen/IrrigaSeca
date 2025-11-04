@@ -85,56 +85,8 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(150,150,150,0.1);
   }
-</style>
-</head>
-<body>
-<div id="container">
-  <h2>Umidade por Fileiras - Gráfico Único</h2>
-
-  <div class="menu-container">
-    <div class="menu-block">
-      <label for="anoSelect">Ano:</label>
-      <select id="anoSelect"></select>
-    </div>
-    <div class="menu-block">
-      <label for="mesSelect">Mês:</label>
-      <select id="mesSelect">
-        <option value="janeiro">Janeiro</option>
-        <option value="fevereiro">Fevereiro</option>
-        <option value="marco">Março</option>
-        <option value="abril">Abril</option>
-        <option value="maio">Maio</option>
-        <option value="junho">Junho</option>
-        <option value="julho">Julho</option>
-        <option value="agosto">Agosto</option>
-        <option value="setembro">Setembro</option>
-        <option value="outubro">Outubro</option>
-        <option value="novembro" selected>Novembro</option>
-        <option value="dezembro">Dezembro</option>
-      </select>
-    </div>
-    <div class="menu-block">
-      <label for="periodoSelect">Período:</label>
-      <select id="periodoSelect">
-        <option value="24h">Últimas 24h</option>
-        <option value="7d">Última semana</option>
-        <option value="15d">Últimos 15 dias</option>
-        <option value="all" selected>Todo o mês</option>
-      </select>
-    </div>
-    <div class="menu-block fileira-checkboxes">
-      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
-      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
-      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
-      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
-    </div>
-  </div>
-
-  <canvas id="graficoUnico"></canvas>
   
-  
-  <style>
-  /* Estilos para a nova seção */
+  /* Estilos para a nova seção (MOVIDO PARA O HEAD) */
   #predictive-analysis {
     border-top: 2px solid #eee;
     margin-top: 40px;
@@ -194,67 +146,80 @@
     font-style: italic;
   }
 </style>
+</head>
+<body>
+<div id="container">
+  <h2>Umidade por Fileiras - Gráfico Único</h2>
 
-<div id="predictive-analysis">
-  <h2 style="text-align: center; margin-bottom: 25px;">Análise Preditiva de Risco</h2>
-
-  <div id="predictive-container">
-    
-    <div class="prediction-block">
-      <h3>Previsão de Risco (Próximas 12h)</h3>
-      <p style="text-align: center; font-size: 0.9em; color: #777;">
-        Simulação baseada em dados históricos e previsão do tempo (fictícia).
-      </p>
-      <table class="risk-table" id="risk-forecast-table">
-        </table>
+  <div class="menu-container">
+    <div class="menu-block">
+      <label for="anoSelect">Ano:</label>
+      <select id="anoSelect"></select>
     </div>
-
-    <div class="prediction-block">
-      <h3>Mapa de Calor Geoespacial</h3>
-      <p style="text-align: center; font-size: 0.9em; color: #777;">
-        Análise de estresse hídrico interpolada (NDVI + Sensores).
-      </p>
-      <div id="risk-map">
-        (Placeholder para o Mapa de Calor Preditivo)
-      </div>
+    <div class="menu-block">
+      <label for="mesSelect">Mês:</label>
+      <select id="mesSelect">
+        <option value="janeiro">Janeiro</option>
+        <option value="fevereiro">Fevereiro</option>
+        <option value="marco">Março</option>
+        <option value="abril">Abril</option>
+        <option value="maio">Maio</option>
+        <option value="junho">Junho</option>
+        <option value="julho">Julho</option>
+        <option value="agosto">Agosto</option>
+        <option value="setembro">Setembro</option>
+        <option value="outubro">Outubro</option>
+        <option value="novembro" selected>Novembro</option>
+        <option value="dezembro">Dezembro</option>
+      </select>
     </div>
-
+    <div class="menu-block">
+      <label for="periodoSelect">Período:</label>
+      <select id="periodoSelect">
+        <option value="24h">Últimas 24h</option>
+        <option value="7d">Última semana</option>
+        <option value="15d">Últimos 15 dias</option>
+        <option value="all" selected>Todo o mês</option>
+      </select>
+    </div>
+    <div class="menu-block fileira-checkboxes">
+      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
+      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
+      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
+      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
+    </div>
   </div>
-</div>
 
-<script>
-  // Script para popular os dados de previsão (simulação)
-  function popularPrevisao() {
-    const tabela = document.getElementById('risk-forecast-table');
-    
-    // Dados fictícios de previsão
-    const previsoes = [
-      { fileira: "Fileira A", risco: "Baixo", classe: "risk-baixo" },
-      { fileira: "Fileira B", risco: "Baixo", classe: "risk-baixo" },
-      { fileira: "Fileira C", risco: "Alto", classe: "risk-alto" },
-      { fileira: "Fileira D", risco: "Médio", classe: "risk-medio" }
-    ];
+  <canvas id="graficoUnico"></canvas>
 
-    let html = '';
-    previsoes.forEach(p => {
-      html += `
-        <tr>
-          <td>${p.fileira}</td>
-          <td class="${p.classe}">${p.risco}</td>
-        </tr>
-      `;
-    });
-    tabela.innerHTML = html;
-  }
+  <div id="predictive-analysis">
+    <h2 style="text-align: center; margin-bottom: 25px;">Análise Preditiva de Risco</h2>
 
-  // Chama a função para popular os dados fictícios
-  // (No projeto real, você buscaria isso de uma API de ML)
-  popularPrevisao();
-</script>
-  
-  
-</div>
-<script>
+    <div id="predictive-container">
+      
+      <div class="prediction-block">
+        <h3>Previsão de Risco (Próximas 12h)</h3>
+        <p style="text-align: center; font-size: 0.9em; color: #777;">
+          Simulação baseada em dados históricos e previsão do tempo (fictícia).
+        </p>
+        <table class="risk-table" id="risk-forecast-table">
+          </table>
+      </div>
+
+      <div class="prediction-block">
+        <h3>Mapa de Calor Geoespacial</h3>
+        <p style="text-align: center; font-size: 0.9em; color: #777;">
+          Análise de estresse hídrico interpolada (NDVI + Sensores).
+        </p>
+        <div id="risk-map">
+          (Placeholder para o Mapa de Calor Preditivo)
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div> <script>
+// --- LÓGICA DO GRÁFICO PRINCIPAL ---
 const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
 const cores = ['blue', 'red', 'green', 'orange'];
 
@@ -431,6 +396,31 @@ async function atualizarGrafico() {
   });
 }
 
+// --- LÓGICA DA TABELA PREDITIVA (MOVIDO PARA CÁ) ---
+function popularPrevisao() {
+  const tabela = document.getElementById('risk-forecast-table');
+  
+  // Dados fictícios de previsão
+  const previsoes = [
+    { fileira: "Fileira A", risco: "Baixo", classe: "risk-baixo" },
+    { fileira: "Fileira B", risco: "Baixo", classe: "risk-baixo" },
+    { fileira: "Fileira C", risco: "Alto", classe: "risk-alto" },
+    { fileira: "Fileira D", risco: "Médio", classe: "risk-medio" }
+  ];
+
+  let html = '';
+  previsoes.forEach(p => {
+    html += `
+      <tr>
+        <td>${p.fileira}</td>
+        <td class="${p.classe}">${p.risco}</td>
+      </tr>
+    `;
+  });
+  tabela.innerHTML = html;
+}
+
+// --- INICIALIZAÇÃO ---
 anoSelect.addEventListener('change', atualizarGrafico);
 mesSelect.addEventListener('change', atualizarGrafico);
 periodoSelect.addEventListener('change', atualizarGrafico);
@@ -438,6 +428,9 @@ fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico
 
 // Inicializa gráfico carregando dados
 atualizarGrafico();
+// Inicializa tabela de previsão
+popularPrevisao();
+
 </script>
 </body>
 </html>
