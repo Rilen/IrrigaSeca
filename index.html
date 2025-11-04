@@ -87,9 +87,9 @@ const cores = ['#007bff','#dc3545','#28a745','#ffc107'];
 const mesSelect = document.getElementById('mesSelect');
 const periodoSelect = document.getElementById('periodoSelect');
 
-// CORREÇÃO CRÍTICA: Mapeamento de URL para o formato de arquivo enviado.
+// CORREÇÃO: Ajuste a URL para corresponder ao formato de arquivo enviado (ex: fileiraA_novembro_2025.log)
 const getLogUrl = (fileira, mes) => {
-    // Procura por (Ex: fileiraA_novembro_2025.log)
+    // Usamos o ano 2025, pois todos os logs enviados têm esse sufixo
     const ano = 2025; 
     return `./${fileira}_${mes}_${ano}.log`; 
 };
@@ -110,11 +110,12 @@ async function fetchFileiraLog(url) {
         return { labels: [], umidade: [], eventos: [] };
     }
     const text = await resp.text();
+    // Lida com diferentes quebras de linha (Windows, Linux)
     const linhas = text.trim().split(/\r?\n/);
     const labels = [], umidade = [], eventos = [];
     
     linhas.forEach((linha, i) => {
-      // CORREÇÃO: Remove o prefixo de citação "" 
+      // CORREÇÃO: Remove o prefixo de citação "" e o sinal "%"
       const cleanLine = linha.replace(/\\s*/, '').trim(); 
       if (cleanLine.length === 0) return;
 
@@ -123,7 +124,7 @@ async function fetchFileiraLog(url) {
       if (partes.length >= 2) {
         labels.push(partes[0].trim()); 
         
-        // CORREÇÃO: Remove o '%' e converte para float
+        // Remove o '%' e converte para float
         const umidadeStr = partes[1].replace('%', '').trim();
         const umidadeVal = parseFloat(umidadeStr);
         umidade.push(isNaN(umidadeVal) ? null : umidadeVal);
@@ -145,7 +146,7 @@ async function fetchFileiraLog(url) {
 
 function getPeriodIndices(labels, period) {
   const total = labels.length;
-  // Ajusta o índice para exibir o período solicitado
+  // Assume 24 leituras por dia.
   if(period==='24h') return [Math.max(0,total-24), total];
   if(period==='7d') return [Math.max(0,total-24*7), total];
   if(period==='15d') return [Math.max(0,total-24*15), total];
@@ -155,9 +156,9 @@ function getPeriodIndices(labels, period) {
 function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   
-  // Mapeia dados para o formato {x: label, y: value} para plotagem
   const umidadePlotData = labels.map((l, i) => ({ x: l, y: umidade[i] }));
 
+  // Filtra e mapeia os eventos para o scatter plot
   const eventData_ON = eventos
       .filter(e => e.status === 'RELE_ON' && umidade[e.x] !== null)
       .map(e => ({ x: labels[e.x], y: umidade[e.x] }));
@@ -166,7 +167,6 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
       .filter(e => e.status === 'RELE_OFF' && umidade[e.x] !== null)
       .map(e => ({ x: labels[e.x], y: umidade[e.x] }));
   
-  // Destrói o gráfico existente para evitar sobreposição
   const existingChart = Chart.getChart(canvasId);
   if (existingChart) existingChart.destroy();
   
@@ -183,7 +183,7 @@ function plotFileira(canvasId, titulo, cor, labels, umidade, eventos) {
           pointRadius: 1, 
           fill: false,
           tension: 0.1,
-          parsing: false
+          parsing: false // Para usar nosso próprio mapeamento {x, y}
         },
         {
           type: 'scatter',
@@ -261,12 +261,8 @@ async function desenhaGraficos() {
   
   let hasData = false;
   
-  // Destroi todos os gráficos antes de começar
-  fileiras.forEach(f => {
-    const existingChart = Chart.getChart(`canvas_${f}_${mes}`);
-    if (existingChart) existingChart.destroy();
-  });
-  container.innerHTML = ''; // Limpa a área de gráficos
+  // Destroi todos os gráficos (método mais seguro)
+  container.innerHTML = ''; 
 
   for(let i=0; i<fileiras.length; i++) {
     const fileira = fileiras[i];
@@ -274,7 +270,7 @@ async function desenhaGraficos() {
     
     const data = await fetchFileiraLog(url);
 
-    // Cria a div do gráfico mesmo que não haja dados (para exibir mensagem de erro)
+    // Cria a div do gráfico (mesmo se sem dados, para feedback)
     const titulo = `${fileira.charAt(0).toUpperCase() + fileira.slice(1)} - ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
     const canvasId = `canvas_${fileira}_${mes}`;
     const div = document.createElement('div');
@@ -298,14 +294,14 @@ async function desenhaGraficos() {
         
         plotFileira(canvasId, titulo, cores[i], labelsRecorte, umidadeRecorte, eventosRecorte);
     } else {
-        // Arquivo não encontrado ou vazio
-        div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div><p style="color: #dc3545; text-align: center;">Arquivo de log não encontrado: ${url.split('./')[1]}</p>`;
+        // Exibe mensagem de erro se o arquivo não for encontrado/vazio.
+        div.innerHTML = `<div class="grafico-titulo"><b>${titulo}</b></div><p style="color: #dc3545; text-align: center;">Arquivo de log não encontrado ou vazio: ${url.split('./')[1]}</p>`;
         container.appendChild(div);
     }
   }
 
   if (!hasData) {
-     container.innerHTML = '<p style="color: red; text-align: center;">Nenhum dado encontrado. Verifique se os arquivos de log estão na pasta correta.</p>';
+     container.innerHTML = '<p style="color: red; text-align: center;">Nenhum dado encontrado para as fileiras selecionadas. Verifique se os arquivos de log estão na pasta correta.</p>';
   }
 }
 
