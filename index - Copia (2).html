@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dashboard Fileiras - Gráfico Único Múltiplas Linhas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; justify-content: center;
+  }
+  #container {
+    max-width: 1200px; width: 100%;
+  }
+  h2 {text-align: center;}
+  .menu-container {
+    display: flex; justify-content: center; gap: 20px; margin-bottom: 25px;
+  }
+  select {
+    width: 200px; height: 120px; /* Para mostrar múltiplas opções ao mesmo tempo */
+  }
+  canvas {
+    width: 80vw !important;
+    max-width: 80vw !important;
+    min-width: 400px;
+    height: 450px !important;
+    min-height: 450px !important;
+    display: block;
+    margin: 0 auto 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(150,150,150,0.1);
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <h2>Umidade por Fileira - Gráfico Único</h2>
+  <div class="menu-container">
+    <label for="mesSelect">Mês:
+      <select id="mesSelect">
+        <option value="outubro">Outubro</option>
+        <option value="novembro" selected>Novembro</option>
+        <option value="setembro">Setembro</option>
+        <option value="agosto">Agosto</option>
+      </select>
+    </label>
+    <label for="periodoSelect">Período:
+      <select id="periodoSelect">
+        <option value="24h">Últimas 24h</option>
+        <option value="7d">Última semana</option>
+        <option value="15d">Últimos 15 dias</option>
+        <option value="all" selected>Todo o mês</option>
+      </select>
+    </label>
+    <label for="fileirasSelect">Fileiras (Ctrl+clique para múltiplas):
+      <select id="fileirasSelect" multiple size="4">
+        <option value="fileiraA" selected>Fileira A</option>
+        <option value="fileiraB" selected>Fileira B</option>
+        <option value="fileiraC" selected>Fileira C</option>
+        <option value="fileiraD" selected>Fileira D</option>
+      </select>
+    </label>
+  </div>
+  <canvas id="graficoUnico"></canvas>
+</div>
+<script>
+const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
+const cores = ['blue', 'red', 'green', 'orange'];
+
+const mesSelect = document.getElementById('mesSelect');
+const periodoSelect = document.getElementById('periodoSelect');
+const fileirasSelect = document.getElementById('fileirasSelect');
+const ctx = document.getElementById('graficoUnico').getContext('2d');
+
+let fileiraCache = {};
+
+async function fetchLog(fileira, mes) {
+  const url = `./data/${fileira}_${mes}.log`;
+  if (fileiraCache[url]) return fileiraCache[url];
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.warn(`Arquivo não encontrado: ${url}`);
+      return { labels: [], umidade: [], eventos: [] };
+    }
+    const text = await resp.text();
+    const linhas = text.trim().split('\n');
+    let labels = [];
+    let umidade = [];
+    let eventos = [];
+    linhas.forEach((linha, i) => {
+      const partes = linha.trim().split(';');
+      if (partes.length >= 2) {
+        labels.push(partes[0].trim());
+        umidade.push(parseFloat(partes[1]));
+        if (partes.length > 2 && partes[2]) {
+          eventos.push({ x: i, status: partes[2].trim() });
+        }
+      }
+    });
+    fileiraCache[url] = { labels, umidade, eventos };
+    return fileiraCache[url];
+  } catch(e) {
+    console.error(e);
+    return { labels: [], umidade: [], eventos: [] };
+  }
+}
+
+function getPeriodRange(labels, periodo) {
+  const total = labels.length;
+  if (periodo === '24h') return [Math.max(0, total - 24), total];
+  if (periodo === '7d') return [Math.max(0, total - 168), total];
+  if (periodo === '15d') return [Math.max(0, total - 360), total];
+  return [0, total]; // 'all'
+}
+
+let chartInstance = null;
+
+async function atualizarGrafico() {
+  const mes = mesSelect.value;
+  const periodo = periodoSelect.value;
+  const fileirasSelecionadas = Array.from(fileirasSelect.selectedOptions).map(o => o.value);
+  
+  let dataSets = [];
+  let labels = [];
+  let largestLen = 0;
+  
+  for (let i=0; i<fileirasSelecionadas.length; i++){
+    const data = await fetchLog(fileirasSelecionadas[i], mes);
+    if(data.labels.length === 0) continue;
+
+    const [inicio, fim] = getPeriodRange(data.labels, periodo);
+    const labelsSlice = data.labels.slice(inicio, fim);
+    const umidadeSlice = data.umidade.slice(inicio, fim);
+    
+    // Usar o maior conjunto de labels para eixo X
+    if (labelsSlice.length > largestLen) {
+      largestLen = labelsSlice.length;
+      labels = labelsSlice;
+    }
+    
+    dataSets.push({
+      label: fileirasSelecionadas[i],
+      data: umidadeSlice,
+      borderColor: cores[fileirasAll.indexOf(fileirasSelecionadas[i]) % cores.length],
+      backgroundColor: cores[fileirasAll.indexOf(fileirasSelecionadas[i]) % cores.length],
+      fill: false,
+      tension: 0.1,
+      pointRadius: 2
+    });
+  }
+  
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: dataSets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        x: {
+          type: 'category',
+          title: { display: true, text: 'Data/Hora' },
+          ticks: {
+            maxRotation: 60,
+            minRotation: 45,
+            maxTicksLimit: 12,
+            callback: function(value, index) {
+              if (index === 0 || index === this.getLabels().length - 1) return value;
+              if (index % Math.ceil(this.getLabels().length / 12) === 0) return value;
+              return '';
+            }
+          }
+        },
+        y: {
+          min: 0,
+          max: 40,
+          title: { display: true, text: 'Umidade (%)' }
+        }
+      }
+    }
+  });
+}
+
+// Eventos para atualizar gráfico em mudança de opções
+mesSelect.addEventListener('change', atualizarGrafico);
+periodoSelect.addEventListener('change', atualizarGrafico);
+fileirasSelect.addEventListener('change', atualizarGrafico);
+
+// Inicializa
+atualizarGrafico();
+</script>
+</body>
+</html>
