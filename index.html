@@ -131,6 +131,128 @@
   </div>
 
   <canvas id="graficoUnico"></canvas>
+  
+  
+  <style>
+  /* Estilos para a nova seção */
+  #predictive-analysis {
+    border-top: 2px solid #eee;
+    margin-top: 40px;
+    padding-top: 20px;
+  }
+  #predictive-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .prediction-block {
+    flex: 1;
+    min-width: 280px;
+    max-width: 45%;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .prediction-block h3 {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+  }
+  .risk-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .risk-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .risk-table td:first-child {
+    font-weight: bold;
+    color: #555;
+  }
+  .risk-table td:last-child {
+    text-align: right;
+    font-weight: bold;
+  }
+  /* Classes de Risco (simuladas) */
+  .risk-alto { color: #D9534F; }
+  .risk-medio { color: #F0AD4E; }
+  .risk-baixo { color: #5CB85C; }
+
+  #risk-map {
+    height: 300px; /* Altura do mapa */
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #eef; /* Cor de placeholder */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-style: italic;
+  }
+</style>
+
+<div id="predictive-analysis">
+  <h2 style="text-align: center; margin-bottom: 25px;">Análise Preditiva de Risco</h2>
+
+  <div id="predictive-container">
+    
+    <div class="prediction-block">
+      <h3>Previsão de Risco (Próximas 12h)</h3>
+      <p style="text-align: center; font-size: 0.9em; color: #777;">
+        Simulação baseada em dados históricos e previsão do tempo (fictícia).
+      </p>
+      <table class="risk-table" id="risk-forecast-table">
+        </table>
+    </div>
+
+    <div class="prediction-block">
+      <h3>Mapa de Calor Geoespacial</h3>
+      <p style="text-align: center; font-size: 0.9em; color: #777;">
+        Análise de estresse hídrico interpolada (NDVI + Sensores).
+      </p>
+      <div id="risk-map">
+        (Placeholder para o Mapa de Calor Preditivo)
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Script para popular os dados de previsão (simulação)
+  function popularPrevisao() {
+    const tabela = document.getElementById('risk-forecast-table');
+    
+    // Dados fictícios de previsão
+    const previsoes = [
+      { fileira: "Fileira A", risco: "Baixo", classe: "risk-baixo" },
+      { fileira: "Fileira B", risco: "Baixo", classe: "risk-baixo" },
+      { fileira: "Fileira C", risco: "Alto", classe: "risk-alto" },
+      { fileira: "Fileira D", risco: "Médio", classe: "risk-medio" }
+    ];
+
+    let html = '';
+    previsoes.forEach(p => {
+      html += `
+        <tr>
+          <td>${p.fileira}</td>
+          <td class="${p.classe}">${p.risco}</td>
+        </tr>
+      `;
+    });
+    tabela.innerHTML = html;
+  }
+
+  // Chama a função para popular os dados fictícios
+  // (No projeto real, você buscaria isso de uma API de ML)
+  popularPrevisao();
+</script>
+  
+  
 </div>
 <script>
 const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
