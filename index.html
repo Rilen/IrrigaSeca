@@ -258,9 +258,9 @@ for(let i = 0; i < mesSelect.options.length; i++) {
 
 function getLogUrl(fileira, mes, ano) {
   // Use os arquivos de simulação se eles existirem
-  //return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
+  return `./data/simulacao_${fileira}_${mes}_${ano}.log`; 
   // Ou volte para o original:
-  return `./data/${fileira}_${mes}_${ano}.log`;
+  //return `./data/${fileira}_${mes}_${ano}.log`;
 }
 
 async function fetchLog(fileira, mes, ano) {
