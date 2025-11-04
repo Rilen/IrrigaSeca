@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dashboard Fileiras - Gráfico Único com Filtros</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -29,6 +29,49 @@
   .fileira-checkboxes label {
     display: block;
     margin: 4px 0;
+    cursor: pointer;
+  }
+  /* Cores para os checkboxes na label */
+  .fileira-checkboxes label input[value="fileiraA"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: blue;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraB"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: red;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraC"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: green;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .fileira-checkboxes label input[value="fileiraD"] + span::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: yellow;
+    border: 1px solid #aaa;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  /* Esconde checkbox padrão */
+  .fileira-checkboxes input[type="checkbox"] {
+    display: none;
+  }
+  /* Estilo customizado para o checkbox */
+  .fileira-checkboxes input[type="checkbox"]:checked + span {
+    font-weight: bold;
   }
   canvas {
     width: 80vw !important;
@@ -66,7 +109,7 @@
         <option value="agosto">Agosto</option>
         <option value="setembro">Setembro</option>
         <option value="outubro">Outubro</option>
-        <option value="novembro">Novembro</option>
+        <option value="novembro" selected>Novembro</option>
         <option value="dezembro">Dezembro</option>
       </select>
     </div>
@@ -80,11 +123,10 @@
       </select>
     </div>
     <div class="menu-block fileira-checkboxes">
-      <label>Fileiras:</label>
-      <label><input type="checkbox" value="fileiraA" checked>Fileira A</label>
-      <label><input type="checkbox" value="fileiraB" checked>Fileira B</label>
-      <label><input type="checkbox" value="fileiraC" checked>Fileira C</label>
-      <label><input type="checkbox" value="fileiraD" checked>Fileira D</label>
+      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
+      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
+      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
+      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
     </div>
   </div>
 
@@ -97,13 +139,13 @@ const cores = ['blue', 'red', 'green', 'orange'];
 const anoSelect = document.getElementById('anoSelect');
 const mesSelect = document.getElementById('mesSelect');
 const periodoSelect = document.getElementById('periodoSelect');
-const graficoUnico = document.getElementById('graficoUnico').getContext('2d');
+const graficoUnicoCtx = document.getElementById('graficoUnico').getContext('2d');
 const fileiraCheckboxes = document.querySelectorAll('.fileira-checkboxes input[type=checkbox]');
 
 let fileiraCache = {};
 let chartInstance = null;
 
-// Popula menu de anos dinamicamente
+// Popula menu de anos dinamicamente (2022 - 2027)
 function popularAnos() {
   const anoInicio = 2022;
   const anoFim = 2027;
@@ -117,6 +159,15 @@ function popularAnos() {
   }
 }
 popularAnos();
+
+// Seleciona automaticamente o mês atual no select
+const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long'}).toLowerCase();
+for(let i = 0; i < mesSelect.options.length; i++) {
+  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
+    mesSelect.selectedIndex = i;
+    break;
+  }
+}
 
 function getLogUrl(fileira, mes, ano) {
   return `./data/${fileira}_${mes}_${ano}.log`;
@@ -132,7 +183,7 @@ async function fetchLog(fileira, mes, ano) {
       return {labels: [], umidade: [], eventos: []};
     }
     const text = await resp.text();
-    const linhas = text.trim().split('\n');
+    const linhas = text.trim().split('\\n');
     let labels = [], umidade = [], eventos = [];
     linhas.forEach((linha, i) => {
       const partes = linha.trim().split(';');
@@ -151,9 +202,9 @@ async function fetchLog(fileira, mes, ano) {
 
 function getPeriodRange(labels, periodo) {
   const total = labels.length;
-  if(periodo==='24h') return [Math.max(0,total-24), total];
-  if(periodo==='7d') return [Math.max(0,total-168), total];
-  if(periodo==='15d') return [Math.max(0,total-360), total];
+  if(periodo === '24h') return [Math.max(0, total - 24), total];
+  if(periodo === '7d') return [Math.max(0, total - 168), total];
+  if(periodo === '15d') return [Math.max(0, total - 360), total];
   return [0, total];
 }
 
@@ -168,7 +219,7 @@ async function atualizarGrafico() {
       chartInstance.destroy();
       chartInstance = null;
     }
-    return; // sem fileira selecionada, limpa gráfico
+    return;
   }
 
   let dataSets = [];
@@ -201,7 +252,7 @@ async function atualizarGrafico() {
   }
 
   if(chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(graficoUnico, {
+  chartInstance = new Chart(graficoUnicoCtx, {
     type: 'line',
     data: {labels, datasets: dataSets},
     options: {
@@ -219,7 +270,7 @@ async function atualizarGrafico() {
             minRotation: 45,
             maxTicksLimit: 12,
             callback: function(value, index) {
-              if(index===0 || index===this.getLabels().length-1) return value;
+              if(index === 0 || index === this.getLabels().length - 1) return value;
               if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
               return '';
             }
@@ -238,11 +289,10 @@ async function atualizarGrafico() {
 anoSelect.addEventListener('change', atualizarGrafico);
 mesSelect.addEventListener('change', atualizarGrafico);
 periodoSelect.addEventListener('change', atualizarGrafico);
-fileiraCheckboxes.forEach(cbx=>cbx.addEventListener('change', atualizarGrafico));
+fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico));
 
-// Inicializa gráfico carregando dados com ano e mês atuais selecionados
+// Inicializa gráfico carregando dados
 atualizarGrafico();
-
 </script>
 </body>
 </html>
