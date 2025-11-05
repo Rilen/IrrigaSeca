@@ -1,298 +1,224 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard Fileiras - Gráfico Único com Filtros</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IrrigaSeca</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 20px;
-    display: flex; justify-content: center;
-  }
-  #container {
-    max-width: 1200px; width: 100%;
-  }
-  h2 { text-align: center; }
-  .menu-container {
+  body{font:14px Arial;margin:0;background:#f5f5f5}
+  #c{padding:10px;max-width:1200px;margin:auto}
+  h2{text-align:center;margin:10px 0}
+  .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
+  .menu div{width:100%;max-width:300px}
+  
+  canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
+  /* Seção de Análise Preditiva */
+  #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
+																							 
+  
+  /* Contêiner dos blocos de Análise e Mapa */
+  #pred > div {
     display: flex;
+    flex-direction: column; /* Empilhamento vertical no mobile */
+    gap: 20px;
     justify-content: center;
-    gap: 40px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
   }
-  .menu-block {
-    text-align: left;
-    max-width: 200px;
-  }
-  .fileira-checkboxes label {
-    display: block;
-    margin: 4px 0;
-    cursor: pointer;
-  }
-  /* Cores para os checkboxes na label */
-  .fileira-checkboxes label input[value="fileiraA"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: blue;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraB"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: red;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraC"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: green;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  .fileira-checkboxes label input[value="fileiraD"] + span::before {
-    content: '';
-    display: inline-block;
-    width: 14px; height: 14px;
-    background: yellow;
-    border: 1px solid #aaa;
-    margin-right: 6px;
-    vertical-align: middle;
-  }
-  /* Esconde checkbox padrão */
-  .fileira-checkboxes input[type="checkbox"] {
-    display: none;
-  }
-  /* Estilo customizado para o checkbox */
-  .fileira-checkboxes input[type="checkbox"]:checked + span {
-    font-weight: bold;
-  }
-  canvas {
-    width: 80vw !important;
-    max-width: 80vw !important;
-    min-width: 400px;
-    height: 450px !important;
-    min-height: 450px !important;
-    display: block;
-    margin: 0 auto 30px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(150,150,150,0.1);
+  
+  .blc{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin:10px 0; width: 100%;} /* 100% de largura no mobile */
+  
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl td{padding:8px;border-bottom:1px solid #eee}
+  .tbl td:last-child{text-align:right;font-weight:bold}
+  .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
+  
+  /* Mapa de Calor */
+  #map{height:320px;width:100%;margin:0;border-radius:12px;border:1px solid #ccc}
+  
+  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
+  
+  @media(min-width:768px){
+    .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
+    canvas#graf{height:450px}
+    #map{height:420px}
+    
+    /* Retorna ao layout lado a lado no desktop */
+    #pred > div {
+        flex-direction: row; 
+        align-items: stretch;
+    }
+    
+    /* Configuração 20% / 80% */
+    .blc-20 { width: 20%; margin: 10px 0; }
+    .blc-80 { width: 80%; margin: 10px 0; }
+    
+    .blc{display:inline-block;vertical-align:top;text-align:center}
   }
 </style>
 </head>
 <body>
-<div id="container">
-  <h2>Umidade por Fileiras - Gráfico Único</h2>
+<div id="c">
+  <h2>Gráfico de Umidade - IrrigaSeca</h2>
+  <div class="menu">
+    <div><label>Ano:<select id="a"></select></label></div>
+    <div><label>Mês:<select id="m"></select></label></div> 
+    <div><label>Período:<select id="p">
+      <option value="24h">24h</option><option value="7d">7d</option>
+      <option value="15d">15d</option><option value="30d">30d</option>
+      <option value="60d">60d</option><option value="90d">90d</option>
+      <option value="all" selected>Tudo</option>
+    </select></label></div>
+    
+    </div>
+	</br>
+  <canvas id="graf"></canvas>
 
-  <div class="menu-container">
-    <div class="menu-block">
-      <label for="anoSelect">Ano:</label>
-      <select id="anoSelect"></select>
-    </div>
-    <div class="menu-block">
-      <label for="mesSelect">Mês:</label>
-      <select id="mesSelect">
-        <option value="janeiro">Janeiro</option>
-        <option value="fevereiro">Fevereiro</option>
-        <option value="marco">Março</option>
-        <option value="abril">Abril</option>
-        <option value="maio">Maio</option>
-        <option value="junho">Junho</option>
-        <option value="julho">Julho</option>
-        <option value="agosto">Agosto</option>
-        <option value="setembro">Setembro</option>
-        <option value="outubro">Outubro</option>
-        <option value="novembro" selected>Novembro</option>
-        <option value="dezembro">Dezembro</option>
-      </select>
-    </div>
-    <div class="menu-block">
-      <label for="periodoSelect">Período:</label>
-      <select id="periodoSelect">
-        <option value="24h">Últimas 24h</option>
-        <option value="7d">Última semana</option>
-        <option value="15d">Últimos 15 dias</option>
-        <option value="all" selected>Todo o mês</option>
-      </select>
-    </div>
-    <div class="menu-block fileira-checkboxes">
-      <label><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
-      <label><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
-      <label><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
-      <label><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
+  <div id="pred">
+    <h2>Análise Preditiva</h2>
+    <div>
+      <div class="blc-20"><h3>Próximas 12h</h3>
+        <table class="tbl" id="tbl"></table>
+      </div>
+      <div class="blc-80"><h3>Mapa de Calor</h3>
+        <div id="map"></div>
+      </div>
     </div>
   </div>
-
-  <canvas id="graficoUnico"></canvas>
 </div>
+
 <script>
-const fileirasAll = ["fileiraA", "fileiraB", "fileiraC", "fileiraD"];
-const cores = ['blue', 'red', 'green', 'orange'];
+const files=["fileiraA","fileiraB","fileiraC","fileiraD"];
+const cores=['#00f','#f00','#0f0','#fa0'];
+const MAX=500; let chart=null,th=0;
+const cache={};
 
-const anoSelect = document.getElementById('anoSelect');
-const mesSelect = document.getElementById('mesSelect');
-const periodoSelect = document.getElementById('periodoSelect');
-const graficoUnicoCtx = document.getElementById('graficoUnico').getContext('2d');
-const fileiraCheckboxes = document.querySelectorAll('.fileira-checkboxes input[type=checkbox]');
+const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
+const ctx=document.getElementById('graf').getContext('2d');
 
-let fileiraCache = {};
-let chartInstance = null;
 
-// Popula menu de anos dinamicamente (2022 - 2027)
-function popularAnos() {
-  const anoInicio = 2022;
-  const anoFim = 2027;
-  const anoAtual = new Date().getFullYear();
-  for(let ano=anoInicio; ano <= anoFim; ano++){
-    const option = document.createElement('option');
-    option.value = ano;
-    option.textContent = ano;
-    if(ano === anoAtual) option.selected = true;
-    anoSelect.appendChild(option);
-  }
+// Variáveis de data e inicialização do menu de data/ano
+const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const hoje = new Date();
+const anoAtual = hoje.getFullYear();
+const mesAtual = meses[hoje.getMonth()];
+const minAno = 2022; 
+const maxAno = 2027; 
+
+for(let y = minAno; y <= maxAno; y++){
+  let o = document.createElement('option');
+  o.value = y;
+  o.text = y;
+  if (y === anoAtual) { o.selected = true; }
+  a.appendChild(o);
 }
-popularAnos();
+meses.forEach(mes => {
+    let o = document.createElement('option');
+    o.value = mes;
+    o.text = mes;
+    if (mes === mesAtual) { o.selected = true; }
+    m.appendChild(o);
+});
 
-// Seleciona automaticamente o mês atual no select
-const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long'}).toLowerCase();
-for(let i = 0; i < mesSelect.options.length; i++) {
-  if(mesSelect.options[i].value.toLowerCase() === mesAtualNome) {
-    mesSelect.selectedIndex = i;
-    break;
-  }
+
+function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
+async function load(f){
+  const u=url(f); if(cache[u])return cache[u];
+  try{
+    const r=await fetch(u);
+    if(!r.ok)return {l:[],d:[]};
+    const t=await r.text();
+    const linhas=t.trim().split('\n');
+    const l=[],d=[];
+    linhas.forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
+    return cache[u]={l,d};
+  }catch(e){return {l:[],d:[]};}
 }
 
-function getLogUrl(fileira, mes, ano) {
-  return `./data/${fileira}_${mes}_${ano}.log`;
+function range(len,per){
+  if(per==='24h')return [Math.max(0,len-24),len];
+  if(per==='7d')return [Math.max(0,len-168),len];
+  if(per==='15d')return [Math.max(0,len-360),len];
+  if(per==='30d')return [Math.max(0,len-720),len];
+  if(per==='60d')return [Math.max(0,len-1440),len];
+  if(per==='90d')return [Math.max(0,len-2160),len];
+  return [0,len];
 }
 
-async function fetchLog(fileira, mes, ano) {
-  const url = getLogUrl(fileira, mes, ano);
-  if(fileiraCache[url]) return fileiraCache[url];
-  try {
-    const resp = await fetch(url);
-    if(!resp.ok) {
-      console.warn(`Arquivo não encontrado: ${url}`);
-      return {labels: [], umidade: [], eventos: []};
+const upd=()=>{
+  if(th)return; th=1;
+  setTimeout(async()=>{
+    // Simplificado: Todas as fileiras são carregadas por padrão (o controle de visibilidade é da legenda do Chart.js)
+    const sel = files; 
+
+    let L=[],DS=[],mx=0,per=p.value;
+    for(let f of sel){
+      const {l,d}=await load(f);
+      if(!l.length)continue;
+      const [i,e]=range(l.length,per);
+      let ls=l.slice(i,e), ds=d.slice(i,e);
+      if(ds.length>MAX)ds=ds.filter((_,k)=>k%Math.ceil(ds.length/MAX)===0);
+      if(ls.length>mx){mx=ls.length;L=ls;}
+      DS.push({label:f,data:ds,borderColor:cores[files.indexOf(f)],tension:.1,pointRadius:2,fill:false});
     }
-    const text = await resp.text();
-    const linhas = text.trim().split('\n');
-    let labels = [], umidade = [], eventos = [];
-    linhas.forEach((linha, i) => {
-      const partes = linha.trim().split(';');
-      if(partes.length >= 2){
-        labels.push(partes[0].trim());
-        umidade.push(parseFloat(partes[1]));
-        if(partes.length > 2 && partes[2]){
-          eventos.push({x: i, status: partes[2].trim()});
-        }
-      }
-    });
-    fileiraCache[url] = {labels, umidade, eventos};
-    return fileiraCache[url];
-  } catch(e) {console.error(e); return {labels: [], umidade: [], eventos: []};}
-}
+    const dias = per==='15d'?15 : per==='30d'?30 : per==='60d'?60 : per==='90d'?90 : per==='7d'?7 : per==='24h'?1 : 999;
+    const step = mx>0 ? Math.ceil(mx/(12*dias)) : 1;
+    if(chart)chart.destroy();
+    chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
+      responsive:true,maintainAspectRatio:true,animation:false,
+      plugins:{legend:{display:true}},
+      scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'%'}}}
+    }});
+    tbl();map();alertas();th=0;
+  },10);
+};
 
-function getPeriodRange(labels, periodo) {
-  const total = labels.length;
-  if(periodo === '24h') return [Math.max(0, total - 24), total];
-  if(periodo === '7d') return [Math.max(0, total - 168), total];
-  if(periodo === '15d') return [Math.max(0, total - 360), total];
-  return [0, total];
-}
+const tbl=()=>{
+  // HARDCODED: Próxima etapa será dinamizar esta função
+  const t=document.getElementById('tbl');
+  const r=[{f:'A',c:'baixo'},{f:'B',c:'baixo'},{f:'C',c:'alto'},{f:'D',c:'medio'}];
+  t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.c}">${x.c.toUpperCase()}</td></tr>`).join('');
+};
 
-async function atualizarGrafico() {
-  const mes = mesSelect.value;
-  const ano = anoSelect.value;
-  const periodo = periodoSelect.value;
+let mapa=null;
+const map=()=>{
+  // HARDCODED: Próxima etapa será dinamizar esta função
+  if(mapa)mapa.remove();
+  mapa=L.map('map').setView([-23.55,-46.63],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+  const h=[[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]];
+  L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
+};
 
-  const checkedFileiras = [...fileiraCheckboxes].filter(c=>c.checked).map(c=>c.value);
-  if(checkedFileiras.length === 0){
-    if(chartInstance){
-      chartInstance.destroy();
-      chartInstance = null;
-    }
-    return;
-  }
+const alertas=()=>{
+  const div=document.createElement('div');
+  div.style=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+             background:#222;color:#fff;padding:15px 25px;border-radius:50px;
+             box-shadow:0 4px 20px #0008;z-index:999;font-weight:bold;
+             animation:fade 4s forwards;`;
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(),4000);
 
-  let dataSets = [];
-  let labels = [];
-  let maiorLen = 0;
-
-  for(let i=0; i<checkedFileiras.length; i++){
-    const fileira = checkedFileiras[i];
-    const data = await fetchLog(fileira, mes, ano);
-    if(data.labels.length === 0) continue;
-
-    const [inicio, fim] = getPeriodRange(data.labels, periodo);
-    const labelsSlice = data.labels.slice(inicio, fim);
-    const umidadeSlice = data.umidade.slice(inicio, fim);
-
-    if(labelsSlice.length > maiorLen){
-      maiorLen = labelsSlice.length;
-      labels = labelsSlice;
-    }
-
-    dataSets.push({
-      label: fileira,
-      data: umidadeSlice,
-      borderColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      backgroundColor: cores[fileirasAll.indexOf(fileira) % cores.length],
-      fill: false,
-      tension: 0.1,
-      pointRadius: 2
-    });
-  }
-
-  if(chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(graficoUnicoCtx, {
-    type: 'line',
-    data: {labels, datasets: dataSets},
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {display: true}
-      },
-      scales: {
-        x: {
-          type: 'category',
-          title: {display: true, text: 'Data/Hora'},
-          ticks: {
-            maxRotation: 60,
-            minRotation: 45,
-            maxTicksLimit: 12,
-            callback: function(value, index) {
-              if(index === 0 || index === this.getLabels().length - 1) return value;
-              if(index % Math.ceil(this.getLabels().length / 12) === 0) return value;
-              return '';
-            }
-          }
-        },
-        y: {
-          min: 0,
-          max: 40,
-          title: {display: true, text: 'Umidade (%)'}
-        }
-      }
-    }
+  const ultimo=[];
+  files.forEach(f=>{
+    const u=url(f), d=cache[u];
+    if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]}); 
   });
-}
+  const secos=ultimo.filter(x=>x.fim<18);
+  if(secos.length){
+    div.textContent=`⚠️ IRRIGUE JÁ: ${secos.map(x=>x.f.slice(-1)).join(', ')} (${secos[0].fim.toFixed(1)}%)`;
+    div.style.background='#d9534f';
+  }else{
+    div.textContent='✅ Umidade OK em todas fileiras';
+    div.style.background='#5cb85c';
+  }
+};
 
-anoSelect.addEventListener('change', atualizarGrafico);
-mesSelect.addEventListener('change', atualizarGrafico);
-periodoSelect.addEventListener('change', atualizarGrafico);
-fileiraCheckboxes.forEach(cbx => cbx.addEventListener('change', atualizarGrafico));
-
-// Inicializa gráfico carregando dados
-atualizarGrafico();
+// Event handlers simplificados para os selects (ano, mês, período)
+[a,m,p].forEach(el=>el.onclick=upd);
+upd();
 </script>
 </body>
 </html>
