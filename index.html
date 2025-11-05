@@ -22,7 +22,10 @@
   .tbl td{padding:8px;border-bottom:1px solid #eee}
   .tbl td:last-child{text-align:right;font-weight:bold}
   .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
-  #map{height:320px;width:90vw;max-width:900px;margin:15px auto;border-radius:12px;border:1px solid #ccc}
+  
+  /* CORREÇÃO APLICADA: Mapeamento da largura para 100% do pai e remoção da margem fixa. */
+  #map{height:320px;width:100%;margin:0;border-radius:12px;border:1px solid #ccc}
+  
   @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
   @media(min-width:768px){
     .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
@@ -34,7 +37,7 @@
 </head>
 <body>
 <div id="c">
-  <h2>Análise de Umidade - IrrigaSeca</h2>
+  <h2>Gráfico de Umidade - IrrigaSeca</h2>
   <div id="pred" class="menu">
     <div><label>Ano:<select id="a"></select></label></div>
     <div><label>Mês:<select id="m"></select></label></div> 
@@ -44,9 +47,8 @@
       <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
-    
+    </br>
     </div>
-	</br>
   <canvas id="graf"></canvas>
 
   <div id="pred">
