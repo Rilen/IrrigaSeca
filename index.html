@@ -46,8 +46,7 @@
     <div><label>Período:<select id="p">
       <option value="24h">24h</option><option value="7d">7d</option>
       <option value="15d">15d</option><option value="30d">30d</option>
-      <option value="60d">60d</option>
-      <option value="90d">90d</option>
+      <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
   </div>
@@ -88,7 +87,7 @@ const load=async f=>{
 };
 
 const range=(len,p)=>{
-  const c={24:24,7:168,15:360,30:720,60:1440,90:2160};
+  const c={'24h':24,'7d':168,'15d':360,'30d':720,'60d':1440,'90d':2160};
   return p in c?[Math.max(0,len-c[p]),len]:[0,len];
 };
 
