@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - IrrigaSeca</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-bottom: 30px; }
+        .config-group { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        .config-group h3 { margin-top: 0; color: #007bff; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .input-pair { display: flex; gap: 20px; margin-bottom: 15px; }
+        .input-pair > div { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #5cb85c; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 20px; }
+        button:hover { background-color: #4cae4c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Painel de Configurações de Irrigação</h2>
+
+        <form id="config-form">
+            
+            <div class="config-group">
+                <h3>Global/Padrão</h3>
+                <div class="input-pair">
+                    <div>
+                        <label for="default-ativacao">Umidade de Ativação Padrão (%)</label>
+                        <input type="number" id="default-ativacao" value="18" min="10" max="40" step="1">
+                    </div>
+                    <div>
+                        <label for="default-desativacao">Umidade de Desativação Padrão (%)</label>
+                        <input type="number" id="default-desativacao" value="25" min="20" max="80" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <h3>Fileira A</h3>
+                <p>Sensor Principal (Ex: Ponto central da fileira)</p>
+                <div class="input-pair">
+                    <div>
+                        <label for="fileiraA-ligar">Ligar Irrigação (Umidade %)</label>
+                        <input type="number" id="fileiraA-ligar" value="15" min="10" max="60" step="1">
+                    </div>
+                    <div>
+                        <label for="fileiraA-desligar">Desligar Irrigação (Umidade %)</label>
+                        <input type="number" id="fileiraA-desligar" value="60" min="20" max="80" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <h3>Fileira B</h3>
+                <p>Sensor Principal (Ex: Solo arenoso)</p>
+                <div class="input-pair">
+                    <div>
+                        <label for="fileiraB-ligar">Ligar Irrigação (Umidade %)</label>
+                        <input type="number" id="fileiraB-ligar" value="18" min="10" max="60" step="1">
+                    </div>
+                    <div>
+                        <label for="fileiraB-desligar">Desligar Irrigação (Umidade %)</label>
+                        <input type="number" id="fileiraB-desligar" value="27" min="20" max="80" step="1">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">Salvar e Enviar para ESP32</button>
+            <a href="index.html" style="display: block; text-align: center; margin-top: 15px; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
+        </form>
+
+        <p style="margin-top: 30px; text-align: center; color: #555;">*No projeto real, esta ação faria uma chamada API para salvar no servidor e/ou enviar a configuração ao ESP32.</p>
+    </div>
+
+    <script>
+        // No projeto real, esta função faria uma chamada POST para salvar as configurações
+        document.getElementById('config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const configs = {
+                "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
+                "default_desativacao": parseFloat(form.elements['default-desativacao'].value),
+                "fileiras": {
+                    "fileiraA": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraA-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraA-desligar'].value) }] },
+                    "fileiraB": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraB-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) }] }
+                    // Adicionar mais fileiras aqui...
+                }
+            };
+            
+            console.log('Novas Configurações Salvas (Simulado):', configs);
+            alert('Configurações salvas e enviadas (Simulado)!');
+        });
+    </script>
+</body>
+</html>
