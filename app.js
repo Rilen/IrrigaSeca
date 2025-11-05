@@ -67,6 +67,8 @@ async function load(f){
   }
 }
 
+// ... (início do app.js)
+
 async function loadJSON(filepath) {
     if (cache[filepath]) return cache[filepath];
     try {
@@ -75,14 +77,20 @@ async function loadJSON(filepath) {
              return {
               "default_ativacao": 18,
               "default_desativacao": 25,
+              // NOVAS CONFIGURAÇÕES DE HORÁRIO E EMERGÊNCIA
+              "hora_inicio_noturna": 1, 
+              "hora_fim_noturna": 5,    
+              "umidade_emergencia": 10,
+              // FIM NOVAS CONFIGURAÇÕES
               "fileiras": {
-                "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 40}] },
-                "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] },
-                "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] },
+                "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 40}] }, // Argiloso
+                "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] }, // Arenoso
+                "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] }, 
                 "fileiraD": { "reles": [{"id": "sensor_principal", "ligar_em": 17, "desligar_em": 28}] }
               }
             };
         } 
+// ... (restante do app.js) ...
         else if (filepath === './status.atual.json') {
              return {
                 "fileiraA": [
