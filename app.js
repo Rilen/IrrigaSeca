@@ -76,8 +76,8 @@ async function loadJSON(filepath) {
               "default_ativacao": 18,
               "default_desativacao": 25,
               "fileiras": {
-                "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 60}] },
-                "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 18, "desligar_em": 27}] },
+                "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 40}] },
+                "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] },
                 "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] },
                 "fileiraD": { "reles": [{"id": "sensor_principal", "ligar_em": 17, "desligar_em": 28}] }
               }

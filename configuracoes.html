@@ -39,59 +39,100 @@
             </div>
 
             <div class="config-group">
-                <h3>Fileira A</h3>
-                <p>Sensor Principal (Ex: Ponto central da fileira)</p>
+                <h3>Fileira A (Ex: Solo Argiloso/Alta Retenção)</h3>
+                <p>Configurações para o sensor de **pior cenário** da Fileira A.</p>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraA-ligar">Ligar Irrigação (Umidade %)</label>
+                        <label for="fileiraA-ligar">Ligar Irrigação (PMP, %)</label>
                         <input type="number" id="fileiraA-ligar" value="15" min="10" max="60" step="1">
                     </div>
                     <div>
-                        <label for="fileiraA-desligar">Desligar Irrigação (Umidade %)</label>
-                        <input type="number" id="fileiraA-desligar" value="60" min="20" max="80" step="1">
+                        <label for="fileiraA-desligar">Desligar Irrigação (CC, %)</label>
+                        <input type="number" id="fileiraA-desligar" value="40" min="20" max="80" step="1">
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Fileira B</h3>
-                <p>Sensor Principal (Ex: Solo arenoso)</p>
+                <h3>Fileira B (Ex: Solo Arenoso/Baixa Retenção)</h3>
+                <p>Configurações para o sensor de **pior cenário** da Fileira B.</p>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraB-ligar">Ligar Irrigação (Umidade %)</label>
-                        <input type="number" id="fileiraB-ligar" value="18" min="10" max="60" step="1">
+                        <label for="fileiraB-ligar">Ligar Irrigação (PMP, %)</label>
+                        <input type="number" id="fileiraB-ligar" value="15" min="10" max="60" step="1">
                     </div>
                     <div>
-                        <label for="fileiraB-desligar">Desligar Irrigação (Umidade %)</label>
-                        <input type="number" id="fileiraB-desligar" value="27" min="20" max="80" step="1">
+                        <label for="fileiraB-desligar">Desligar Irrigação (CC, %)</label>
+                        <input type="number" id="fileiraB-desligar" value="30" min="20" max="80" step="1">
                     </div>
                 </div>
             </div>
             
-            <button type="submit">Salvar e Enviar para ESP32</button>
+            <button type="submit">Salvar e Enviar para ESP32 (Simulado)</button>
             <a href="index.html" style="display: block; text-align: center; margin-top: 15px; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
         </form>
 
-        <p style="margin-top: 30px; text-align: center; color: #555;">*No projeto real, esta ação faria uma chamada API para salvar no servidor e/ou enviar a configuração ao ESP32.</p>
+        <p style="margin-top: 30px; text-align: center; color: #555;">*A ação abaixo simula a chamada POST para o controlador.</p>
     </div>
 
     <script>
-        // No projeto real, esta função faria uma chamada POST para salvar as configurações
-        document.getElementById('config-form').addEventListener('submit', function(e) {
+        document.getElementById('config-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const form = e.target;
+            
+            // 1. Coleta os dados do formulário
             const configs = {
                 "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
                 "default_desativacao": parseFloat(form.elements['default-desativacao'].value),
                 "fileiras": {
-                    "fileiraA": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraA-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraA-desligar'].value) }] },
-                    "fileiraB": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraB-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) }] }
+                    "fileiraA": { 
+                        "reles": [{ 
+                            "id": "sensor_principal", 
+                            "ligar_em": parseFloat(form.elements['fileiraA-ligar'].value), 
+                            "desligar_em": parseFloat(form.elements['fileiraA-desligar'].value) 
+                        }] 
+                    },
+                    "fileiraB": { 
+                        "reles": [{ 
+                            "id": "sensor_principal", 
+                            "ligar_em": parseFloat(form.elements['fileiraB-ligar'].value), 
+                            "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) 
+                        }] 
+                    }
                     // Adicionar mais fileiras aqui...
                 }
             };
             
-            console.log('Novas Configurações Salvas (Simulado):', configs);
-            alert('Configurações salvas e enviadas (Simulado)!');
+            console.log('Novas Configurações Prontas para Envio:', configs);
+
+            // 2. Simulação da Chamada POST (Enviando para o ESP32/Servidor)
+            const simulatedEndpoint = 'http://192.168.4.1/config'; // Exemplo de IP do ESP32 ou API
+
+            try {
+                // No ambiente de produção, este 'fetch' seria descomentado.
+                /*
+                const response = await fetch(simulatedEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(configs),
+                });
+
+                if (response.ok) {
+                    alert('✅ Configurações salvas e enviadas com sucesso para o controlador!');
+                } else {
+                    alert('⚠️ Erro ao enviar configurações (Status: ' + response.status + '). Verifique o ESP32.');
+                }
+                */
+                
+                // SIMULAÇÃO COMPLETA:
+                alert('✅ Configurações salvas e enviadas com sucesso (Simulado)!');
+                
+            } catch (error) {
+                console.error('Erro de conexão simulado:', error);
+                alert('⚠️ Erro de conexão (Simulado). O ESP32 está offline ou o IP está incorreto.');
+            }
         });
     </script>
 </body>
