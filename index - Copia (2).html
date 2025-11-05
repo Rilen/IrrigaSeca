@@ -14,21 +14,15 @@
   h2{text-align:center;margin:10px 0}
   .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
   .menu div{width:100%;max-width:300px}
-  
-  /* Estilos para os novos "checkboxes" (labels) */
   .chk label{display:flex;align-items:center;gap:8px;cursor:pointer}
-  .chk label[data-checked="true"] span{font-weight:bold;text-decoration:none;}
-  .chk label[data-checked="false"] span{text-decoration:line-through;color:#aaa;font-weight:normal;}
-
-  /* Estilização da bolinha de cor (mantida no span:before) */
+  .chk input{display:none}
   .chk span{position:relative;padding-left:22px}
-  .chk span::before{content:'';position:absolute;left:0;width:14px;height:14px;border-radius:4px;top:calc(50% - 7px);}
-  
+  .chk span::before{content:'';position:absolute;left:0;width:14px;height:14px;border-radius:4px}
   #fA span::before{background:#00f}
   #fB span::before{background:#f00}
   #fC span::before{background:#0f0}
   #fD span::before{background:#fa0}
-  
+  .chk input:checked+span{font-weight:bold}
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
   #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
   .blc{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin:10px 0}
@@ -65,10 +59,10 @@
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
-      <label id="fA" data-fileira="fileiraA" data-checked="true"><span>Fileira A</span></label>
-      <label id="fB" data-fileira="fileiraB" data-checked="true"><span>Fileira B</span></label>
-      <label id="fC" data-fileira="fileiraC" data-checked="true"><span>Fileira C</span></label>
-      <label id="fD" data-fileira="fileiraD" data-checked="true"><span>Fileira D</span></label>
+      <label id="fA"><input type="checkbox" value="fileiraA" checked><span>Fileira A</span></label>
+      <label id="fB"><input type="checkbox" value="fileiraB" checked><span>Fileira B</span></label>
+      <label id="fC"><input type="checkbox" value="fileiraC" checked><span>Fileira C</span></label>
+      <label id="fD"><input type="checkbox" value="fileiraD" checked><span>Fileira D</span></label>
     </div>
   </div>
   <canvas id="graf"></canvas>
@@ -94,7 +88,7 @@ const cache={};
 
 const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
-const chkLabels = document.querySelectorAll('.chk label');
+const chks=document.querySelectorAll('.chk input');
 
 for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
 a.value=2025;
@@ -126,11 +120,7 @@ function range(len,per){
 const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
-    // Lógica atualizada para obter o estado de seleção dos novos labels
-    const sel = [...chkLabels]
-        .filter(label => label.getAttribute('data-checked') === 'true')
-        .map(label => label.getAttribute('data-fileira')); 
-
+    const sel=[...chks].filter(c=>c.checked).map(c=>c.value);
     let L=[],DS=[],mx=0,per=p.value;
     for(let f of sel){
       const {l,d}=await load(f);
@@ -154,7 +144,6 @@ const upd=()=>{
 };
 
 const tbl=()=>{
-  // HARDCODED: Próxima etapa será dinamizar esta função
   const t=document.getElementById('tbl');
   const r=[{f:'A',c:'baixo'},{f:'B',c:'baixo'},{f:'C',c:'alto'},{f:'D',c:'medio'}];
   t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.c}">${x.c.toUpperCase()}</td></tr>`).join('');
@@ -162,7 +151,6 @@ const tbl=()=>{
 
 let mapa=null;
 const map=()=>{
-  // HARDCODED: Próxima etapa será dinamizar esta função
   if(mapa)mapa.remove();
   mapa=L.map('map').setView([-23.55,-46.63],15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
@@ -182,9 +170,7 @@ const alertas=()=>{
   const ultimo=[];
   files.forEach(f=>{
     const u=url(f), d=cache[u];
-    // Esta lógica não funciona bem sem um servidor mockando o "último estado"
-    // Mantendo a lógica original baseada no último ponto do log
-    if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]}); 
+    if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]});
   });
   const secos=ultimo.filter(x=>x.fim<18);
   if(secos.length){
@@ -196,18 +182,7 @@ const alertas=()=>{
   }
 };
 
-// Adiciona o novo comportamento de clique para os rótulos de fileira
-chkLabels.forEach(label => {
-    label.onclick = (e) => {
-        // Alterna o estado do atributo data-checked
-        const isChecked = label.getAttribute('data-checked') === 'true';
-        label.setAttribute('data-checked', isChecked ? 'false' : 'true');
-        upd();
-    };
-});
-
-// Event listeners para os selects (ano, mês, período) e agora para os labels
-[a,m,p,...chkLabels].forEach(el=>el.onclick=upd);
+[a,m,p,...chks].forEach(el=>el.onclick=upd);
 upd();
 </script>
 </body>
