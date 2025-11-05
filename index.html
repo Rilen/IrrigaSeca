@@ -15,8 +15,18 @@
   .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
   .menu div{width:100%;max-width:300px}
   
-  /* Estilos para os rótulos de fileira (agora usando .filter-label) */
-  .filter-label {
+  /* Estilos para o novo contêiner de filtros */
+  #fileira-filters {
+      width: 100%;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+  }
+  
+  /* Estilos para os rótulos de fileira (usando o novo ID contêiner) */
+  #fileira-filters label {
     display: block; 
     cursor: pointer;
     text-align: center;
@@ -25,9 +35,9 @@
   }
   
   /* Estilo que simula o desativado (riscado e cinza) */
-  .filter-label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
+  #fileira-filters label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
   /* Estilo que simula o ativado (negrito) */
-  .filter-label[data-checked="true"] {font-weight:bold;text-decoration:none;}
+  #fileira-filters label[data-checked="true"] {font-weight:bold;text-decoration:none;}
   
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
   #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
@@ -44,7 +54,14 @@
     #map{height:420px}
     .blc{max-width:45%;display:inline-block;vertical-align:top;text-align:center}
     
-    .filter-label {
+    /* Ajuste para desktop */
+    #fileira-filters {
+        flex-direction: row; 
+        gap: 15px;
+        max-width: none;
+        width: auto;
+    }
+    #fileira-filters label {
         width: auto;
         max-width: none;
     }
@@ -64,6 +81,7 @@
       <option value="all" selected>Tudo</option>
     </select></label></div>
     
+    <div id="fileira-filters"></div>
   </div>
   <canvas id="graf"></canvas>
 
@@ -86,40 +104,7 @@ const cores=['#00f','#f00','#0f0','#fa0'];
 const MAX=500; let chart=null,th=0;
 const cache={};
 
-const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
-const chkLabels = document.querySelectorAll('.filter-label');
-
-// Variáveis para data automática
-const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-const hoje = new Date();
-const anoAtual = hoje.getFullYear();
-const mesAtual = meses[hoje.getMonth()];
-
-// 1. Automatização do Ano (a)
-const minAno = 2022; 
-const maxAno = 2027; 
-
-for(let y = minAno; y <= maxAno; y++){
-  let o = document.createElement('option');
-  o.value = y;
-  o.text = y;
-  if (y === anoAtual) {
-      o.selected = true; 
-  }
-  a.appendChild(o);
-}
-
-// 2. Automatização do Mês (m)
-meses.forEach(mes => {
-    let o = document.createElement('option');
-    o.value = mes;
-    o.text = mes;
-    if (mes === mesAtual) {
-        o.selected = true;
-    }
-    m.appendChild(o);
-});
 
 
 function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
@@ -149,7 +134,10 @@ function range(len,per){
 const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
-    // Lógica atualizada para obter o estado de seleção dos labels
+    // Re-seleciona os labels após a possível geração dinâmica
+    const chkLabels = document.querySelectorAll('#fileira-filters label');
+    
+    // Lógica para obter o estado de seleção dos labels
     const sel = [...chkLabels]
         .filter(label => label.getAttribute('data-checked') === 'true')
         .map(label => label.getAttribute('data-fileira')); 
@@ -217,17 +205,74 @@ const alertas=()=>{
   }
 };
 
-// Event handler para toggling
-chkLabels.forEach(label => {
-    label.onclick = () => {
-        const isChecked = label.getAttribute('data-checked') === 'true';
-        label.setAttribute('data-checked', isChecked ? 'false' : 'true');
-        upd();
-    };
-});
 
-[a,m,p,...chkLabels].forEach(el=>el.onclick=upd);
-upd();
+// NOVO BLOCO DE GERAÇÃO DINÂMICA
+function gerarFiltrosFileira(a, m, p) {
+    const container = document.getElementById('fileira-filters');
+    const labelsArray = []; 
+
+    files.forEach((fileira, index) => {
+        const label = document.createElement('label');
+        label.id = `f${fileira.slice(-1)}`; 
+        label.setAttribute('data-fileira', fileira);
+        label.setAttribute('data-checked', 'true'); 
+        label.textContent = fileira.replace('fileira', 'Fileira ');
+
+        // Adiciona o event handler (lógica de clique)
+        label.onclick = () => {
+            const isChecked = label.getAttribute('data-checked') === 'true';
+            label.setAttribute('data-checked', isChecked ? 'false' : 'true');
+            upd();
+        };
+
+        container.appendChild(label);
+        labelsArray.push(label);
+    });
+
+    // Adiciona os listeners de evento dos selects no final da inicialização
+    [a, m, p].forEach(el => el.onclick = upd);
+    
+    return labelsArray;
+}
+
+// O ponto de entrada principal do script é modificado
+const main = () => {
+    // Inicialização dos elementos de data (mantido para a inicialização)
+    const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = meses[hoje.getMonth()];
+
+    const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
+
+    const minAno = 2022; 
+    const maxAno = 2027; 
+
+    for(let y = minAno; y <= maxAno; y++){
+      let o = document.createElement('option');
+      o.value = y;
+      o.text = y;
+      if (y === anoAtual) { o.selected = true; }
+      a.appendChild(o);
+    }
+    meses.forEach(mes => {
+        let o = document.createElement('option');
+        o.value = mes;
+        o.text = mes;
+        if (mes === mesAtual) { o.selected = true; }
+        m.appendChild(o);
+    });
+    
+    // GERA OS FILTROS DINAMICAMENTE E ADICIONA EVENT LISTENERS
+    const chkLabels = gerarFiltrosFileira(a, m, p); 
+    
+    // Adiciona os listeners de clique dos labels de fileira
+    chkLabels.forEach(el => el.onclick = el.onclick); 
+
+    upd(); // Roda a atualização inicial
+};
+
+main(); // Chamada para iniciar o script
 </script>
 </body>
 </html>
