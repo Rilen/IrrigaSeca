@@ -222,7 +222,7 @@ const upd=()=>{
     if(chart)chart.destroy();
     chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
-      plugins:{legend:{
+      plugins:{legend:{display:true}},
         display:true, 
         onClick: (e, legendItem, chart) => {
           const index = legendItem.datasetIndex;
