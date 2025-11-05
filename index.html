@@ -56,13 +56,7 @@
   <h2>IrrigaSeca</h2>
   <div class="menu">
     <div><label>Ano:<select id="a"></select></label></div>
-    <div><label>Mês:<select id="m">
-      <option>janeiro</option><option>fevereiro</option><option>marco</option>
-      <option>abril</option><option>maio</option><option>junho</option>
-      <option>julho</option><option>agosto</option><option>setembro</option>
-      <option>outubro</option><option value="novembro" selected>novembro</option>
-      <option>dezembro</option>
-    </select></label></div>
+    <div><label>Mês:<select id="m"></select></label></div> 
     <div><label>Período:<select id="p">
       <option value="24h">24h</option><option value="7d">7d</option>
       <option value="15d">15d</option><option value="30d">30d</option>
@@ -70,10 +64,6 @@
       <option value="all" selected>Tudo</option>
     </select></label></div>
     
-    <label class="filter-label" id="fA" data-fileira="fileiraA" data-checked="true">Fileira A</label>
-    <label class="filter-label" id="fB" data-fileira="fileiraB" data-checked="true">Fileira B</label>
-    <label class="filter-label" id="fC" data-fileira="fileiraC" data-checked="true">Fileira C</label>
-    <label class="filter-label" id="fD" data-fileira="fileiraD" data-checked="true">Fileira D</label>
   </div>
   <canvas id="graf"></canvas>
 
@@ -100,8 +90,37 @@ const a=document.getElementById('a'),m=document.getElementById('m'),p=document.g
 const ctx=document.getElementById('graf').getContext('2d');
 const chkLabels = document.querySelectorAll('.filter-label');
 
-for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
-a.value=2025;
+// Variáveis para data automática
+const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const hoje = new Date();
+const anoAtual = hoje.getFullYear();
+const mesAtual = meses[hoje.getMonth()];
+
+// 1. Automatização do Ano (a)
+const minAno = 2022; 
+const maxAno = 2027; 
+
+for(let y = minAno; y <= maxAno; y++){
+  let o = document.createElement('option');
+  o.value = y;
+  o.text = y;
+  if (y === anoAtual) {
+      o.selected = true; 
+  }
+  a.appendChild(o);
+}
+
+// 2. Automatização do Mês (m)
+meses.forEach(mes => {
+    let o = document.createElement('option');
+    o.value = mes;
+    o.text = mes;
+    if (mes === mesAtual) {
+        o.selected = true;
+    }
+    m.appendChild(o);
+});
+
 
 function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
 async function load(f){
