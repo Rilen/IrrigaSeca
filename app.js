@@ -15,279 +15,6 @@ const LON_CENTER = -41.783619;
 const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
 
-// Dados de log de NOVEMBRO/2025 fornecidos pelo usuário, injetados para visualização imediata no ambiente de simulação.
-// NOVO BLOCO DE DADOS INJETADOS PARA GARANTIR A VISUALIZAÇÃO
-const INJECTED_LOG_DATA = {
-    // Conteúdo de fileiraA_novembro_2025.log
-    "fileiraA_novembro_2025.log": `2025-11-01 07:00:00;21.6;RELE_OFF
-2025-11-01 08:00:00;22.1;RELE_OFF
-2025-11-01 09:00:00;18.4;RELE_ON
-2025-11-01 10:00:00;26.9;RELE_OFF
-2025-11-01 11:00:00;23.1;RELE_OFF
-2025-11-01 12:00:00;16.0;RELE_ON
-2025-11-01 13:00:00;19.5;RELE_ON
-2025-11-01 14:00:00;24.3;RELE_OFF
-2025-11-01 15:00:00;21.3;RELE_OFF
-2025-11-01 16:00:00;18.4;RELE_ON
-2025-11-01 17:00:00;18.5;RELE_ON
-2025-11-01 18:00:00;25.1;RELE_OFF
-2025-11-01 19:00:00;20.8;RELE_OFF
-2025-11-01 20:00:00;25.5;RELE_OFF
-2025-11-01 21:00:00;15.7;RELE_ON
-2025-11-01 22:00:00;21.1;RELE_OFF
-2025-11-01 23:00:00;26.7;RELE_OFF
-2025-11-02 00:00:00;30.0;RELE_OFF
-2025-11-02 01:00:00;20.5;RELE_OFF
-2025-11-02 02:00:00;20.1;RELE_OFF
-2025-11-02 03:00:00;24.5;RELE_OFF
-2025-11-02 04:00:00;16.8;RELE_ON
-2025-11-02 05:00:00;22.6;RELE_OFF
-2025-11-02 06:00:00;21.6;RELE_OFF
-2025-11-02 07:00:00;22.7;RELE_OFF
-2025-11-02 08:00:00;18.9;RELE_ON
-2025-11-02 09:00:00;19.6;RELE_ON
-2025-11-02 10:00:00;24.2;RELE_OFF
-2025-11-02 11:00:00;15.1;RELE_ON
-2025-11-02 12:00:00;24.6;RELE_OFF
-2025-11-02 13:00:00;24.1;RELE_OFF
-2025-11-02 14:00:00;22.0;RELE_OFF
-2025-11-02 15:00:00;19.0;RELE_ON
-2025-11-02 16:00:00;16.8;RELE_ON
-2025-11-02 17:00:00;17.0;RELE_ON
-2025-11-02 18:00:00;18.8;RELE_ON
-2025-11-02 19:00:00;28.3;RELE_OFF
-2025-11-02 20:00:00;15.4;RELE_ON
-2025-11-02 21:00:00;25.1;RELE_OFF
-2025-11-02 22:00:00;22.4;RELE_OFF
-2025-11-02 23:00:00;25.8;RELE_OFF
-2025-11-03 00:00:00;16.6;RELE_ON
-2025-11-03 01:00:00;23.6;RELE_OFF
-2025-11-03 02:00:00;22.5;RELE_OFF
-2025-11-03 03:00:00;19.6;RELE_ON
-2025-11-03 04:00:00;25.6;RELE_OFF
-2025-11-03 05:00:00;24.1;RELE_OFF
-2025-11-03 06:00:00;19.7;RELE_ON
-2025-11-03 07:00:00;21.1;RELE_OFF
-2025-11-03 08:00:00;25.1;RELE_OFF
-2025-11-03 09:00:00;17.8;RELE_ON
-2025-11-03 10:00:00;23.1;RELE_OFF
-2025-11-03 11:00:00;26.0;RELE_OFF
-2025-11-03 12:00:00;25.0;RELE_OFF
-2025-11-03 13:00:00;22.2;RELE_OFF
-2025-11-03 14:00:00;20.6;RELE_OFF
-2025-11-03 15:00:00;14.6;RELE_ON
-2025-11-03 16:00:00;27.0;RELE_OFF
-2025-11-03 17:00:00;15.7;RELE_ON
-2025-11-03 18:00:00;22.8;RELE_OFF
-2025-11-03 19:00:00;17.3;RELE_ON
-2025-11-03 20:00:00;20.5;RELE_ON
-2025-11-03 21:00:00;22.2;RELE_OFF
-2025-11-03 22:00:00;22.4;RELE_OFF
-2025-11-03 23:00:00;23.3;RELE_OFF
-`,
-    // Conteúdo de fileiraB_novembro_2025.log
-    "fileiraB_novembro_2025.log": `2025-11-01 07:00:00;24.4;RELE_OFF
-2025-11-01 08:00:00;27.1;RELE_OFF
-2025-11-01 09:00:00;29.3;RELE_OFF
-2025-11-01 10:00:00;26.3;RELE_OFF
-2025-11-01 11:00:00;26.7;RELE_OFF
-2025-11-01 12:00:00;26.8;RELE_OFF
-2025-11-01 13:00:00;21.5;RELE_OFF
-2025-11-01 14:00:00;19.9;RELE_ON
-2025-11-01 15:00:00;23.7;RELE_OFF
-2025-11-01 16:00:00;24.2;RELE_OFF
-2025-11-01 17:00:00;27.8;RELE_OFF
-2025-11-01 18:00:00;26.2;RELE_OFF
-2025-11-01 19:00:00;27.9;RELE_OFF
-2025-11-01 20:00:00;24.0;RELE_OFF
-2025-11-01 21:00:00;19.6;RELE_ON
-2025-11-01 22:00:00;30.0;RELE_OFF
-2025-11-01 23:00:00;27.1;RELE_OFF
-2025-11-02 00:00:00;20.9;RELE_OFF
-2025-11-02 01:00:00;22.7;RELE_OFF
-2025-11-02 02:00:00;21.8;RELE_OFF
-2025-11-02 03:00:00;20.4;RELE_OFF
-2025-11-02 04:00:00;20.1;RELE_OFF
-2025-11-02 05:00:00;26.5;RELE_OFF
-2025-11-02 06:00:00;27.6;RELE_OFF
-2025-11-02 07:00:00;23.2;RELE_OFF
-2025-11-02 08:00:00;26.8;RELE_OFF
-2025-11-02 09:00:00;17.7;RELE_ON
-2025-11-02 10:00:00;26.7;RELE_OFF
-2025-11-02 11:00:00;27.7;RELE_OFF
-2025-11-02 12:00:00;23.1;RELE_OFF
-2025-11-02 13:00:00;23.7;RELE_OFF
-2025-11-02 14:00:00;23.2;RELE_OFF
-2025-11-02 15:00:00;20.7;RELE_OFF
-2025-11-02 16:00:00;22.8;RELE_OFF
-2025-11-02 17:00:00;19.8;RELE_ON
-2025-11-02 18:00:00;26.3;RELE_OFF
-2025-11-02 19:00:00;24.3;RELE_OFF
-2025-11-02 20:00:00;17.3;RELE_ON
-2025-11-02 21:00:00;18.5;RELE_ON
-2025-11-02 22:00:00;22.4;RELE_OFF
-2025-11-02 23:00:00;23.8;RELE_OFF
-2025-11-03 00:00:00;24.6;RELE_OFF
-2025-11-03 01:00:00;24.7;RELE_OFF
-2025-11-03 02:00:00;18.3;RELE_ON
-2025-11-03 03:00:00;22.0;RELE_OFF
-2025-11-03 04:00:00;29.6;RELE_OFF
-2025-11-03 05:00:00;19.9;RELE_ON
-2025-11-03 06:00:00;24.4;RELE_OFF
-2025-11-03 07:00:00;16.4;RELE_ON
-2025-11-03 08:00:00;24.6;RELE_OFF
-2025-11-03 09:00:00;27.4;RELE_OFF
-2025-11-03 10:00:00;21.9;RELE_OFF
-2025-11-03 11:00:00;22.2;RELE_OFF
-2025-11-03 12:00:00;18.5;RELE_ON
-2025-11-03 13:00:00;17.7;RELE_ON
-2025-11-03 14:00:00;24.5;RELE_OFF
-2025-11-03 15:00:00;24.6;RELE_OFF
-2025-11-03 16:00:00;23.1;RELE_OFF
-2025-11-03 17:00:00;20.4;RELE_OFF
-2025-11-03 18:00:00;19.2;RELE_ON
-2025-11-03 19:00:00;25.8;RELE_OFF
-2025-11-03 20:00:00;28.0;RELE_OFF
-2025-11-03 21:00:00;27.9;RELE_OFF
-2025-11-03 22:00:00;26.0;RELE_OFF
-2025-11-03 23:00:00;30.6;RELE_OFF
-`,
-    // Conteúdo de fileiraC_novembro_2025.log
-    "fileiraC_novembro_2025.log": `2025-11-01 07:00:00;22.5;RELE_OFF
-2025-11-01 08:00:00;21.1;RELE_OFF
-2025-11-01 09:00:00;21.0;RELE_OFF
-2025-11-01 10:00:00;20.5;RELE_OFF
-2025-11-01 11:00:00;15.9;RELE_ON
-2025-11-01 12:00:00;22.3;RELE_OFF
-2025-11-01 13:00:00;21.2;RELE_OFF
-2025-11-01 14:00:00;16.4;RELE_ON
-2025-11-01 15:00:00;14.4;RELE_ON
-2025-11-01 16:00:00;17.1;RELE_ON
-2025-11-01 17:00:00;21.6;RELE_OFF
-2025-11-01 18:00:00;14.0;RELE_ON
-2025-11-01 19:00:00;23.8;RELE_OFF
-2025-11-01 20:00:00;21.3;RELE_OFF
-2025-11-01 21:00:00;23.5;RELE_OFF
-2025-11-01 22:00:00;19.2;RELE_ON
-2025-11-01 23:00:00;18.0;RELE_ON
-2025-11-02 00:00:00;16.8;RELE_ON
-2025-11-02 01:00:00;21.0;RELE_OFF
-2025-11-02 02:00:00;19.2;RELE_ON
-2025-11-02 03:00:00;20.0;RELE_ON
-2025-11-02 04:00:00;17.3;RELE_ON
-2025-11-02 05:00:00;18.6;RELE_ON
-2025-11-02 06:00:00;17.2;RELE_ON
-2025-11-02 07:00:00;14.8;RELE_ON
-2025-11-02 08:00:00;22.0;RELE_OFF
-2025-11-02 09:00:00;12.8;RELE_ON
-2025-11-02 10:00:00;17.7;RELE_ON
-2025-11-02 11:00:00;19.1;RELE_ON
-2025-11-02 12:00:00;21.5;RELE_OFF
-2025-11-02 13:00:00;21.9;RELE_OFF
-2025-11-02 14:00:00;22.8;RELE_OFF
-2025-11-02 15:00:00;15.2;RELE_ON
-2025-11-02 16:00:00;22.4;RELE_OFF
-2025-11-02 17:00:00;23.2;RELE_OFF
-2025-11-02 18:00:00;16.5;RELE_ON
-2025-11-02 19:00:00;20.0;RELE_ON
-2025-11-02 20:00:00;21.2;RELE_OFF
-2025-11-02 21:00:00;16.9;RELE_ON
-2025-11-02 22:00:00;23.7;RELE_OFF
-2025-11-02 23:00:00;18.9;RELE_ON
-2025-11-03 00:00:00;16.2;RELE_ON
-2025-11-03 01:00:00;18.7;RELE_ON
-2025-11-03 02:00:00;19.2;RELE_ON
-2025-11-03 03:00:00;18.6;RELE_ON
-2025-11-03 04:00:00;23.7;RELE_OFF
-2025-11-03 05:00:00;23.7;RELE_OFF
-2025-11-03 06:00:00;20.5;RELE_OFF
-2025-11-03 07:00:00;22.2;RELE_OFF
-2025-11-03 08:00:00;20.8;RELE_OFF
-2025-11-03 09:00:00;18.5;RELE_ON
-2025-11-03 10:00:00;21.9;RELE_OFF
-2025-11-03 11:00:00;20.0;RELE_ON
-2025-11-03 12:00:00;17.3;RELE_ON
-2025-11-03 13:00:00;21.9;RELE_OFF
-2025-11-03 14:00:00;15.4;RELE_ON
-2025-11-03 15:00:00;23.4;RELE_OFF
-2025-11-03 16:00:00;19.3;RELE_ON
-2025-11-03 17:00:00;17.4;RELE_ON
-2025-11-03 18:00:00;17.4;RELE_ON
-2025-11-03 19:00:00;20.2;RELE_ON
-2025-11-03 20:00:00;18.8;RELE_ON
-2025-11-03 21:00:00;22.3;RELE_OFF
-2025-11-03 22:00:00;19.3;RELE_ON
-2025-11-03 23:00:00;19.3;RELE_ON
-`,
-    // Conteúdo de fileiraD_novembro_2025.log
-    "fileiraD_novembro_2025.log": `2025-11-01 07:00:00;17.2;RELE_ON
-2025-11-01 08:00:00;22.4;RELE_OFF
-2025-11-01 09:00:00;18.6;RELE_ON
-2025-11-01 10:00:00;17.8;RELE_ON
-2025-11-01 11:00:00;18.0;RELE_ON
-2025-11-01 12:00:00;26.8;RELE_OFF
-2025-11-01 13:00:00;23.9;RELE_OFF
-2025-11-01 14:00:00;22.1;RELE_OFF
-2025-11-01 15:00:00;18.7;RELE_ON
-2025-11-01 16:00:00;18.8;RELE_ON
-2025-11-01 17:00:00;14.8;RELE_ON
-2025-11-01 18:00:00;13.8;RELE_ON
-2025-11-01 19:00:00;19.0;RELE_ON
-2025-11-01 20:00:00;22.9;RELE_OFF
-2025-11-01 21:00:00;23.1;RELE_OFF
-2025-11-01 22:00:00;18.8;RELE_ON
-2025-11-01 23:00:00;19.9;RELE_ON
-2025-11-02 00:00:00;23.5;RELE_OFF
-2025-11-02 01:00:00;21.9;RELE_OFF
-2025-11-02 02:00:00;28.5;RELE_OFF
-2025-11-02 03:00:00;24.1;RELE_OFF
-2025-11-02 04:00:00;18.0;RELE_ON
-2025-11-02 05:00:00;20.3;RELE_ON
-2025-11-02 06:00:00;19.3;RELE_ON
-2025-11-02 07:00:00;21.2;RELE_OFF
-2025-11-02 08:00:00;27.0;RELE_OFF
-2025-11-02 09:00:00;23.8;RELE_OFF
-2025-11-02 10:00:00;24.0;RELE_OFF
-2025-11-02 11:00:00;20.2;RELE_OFF
-2025-11-02 12:00:00;20.5;RELE_OFF
-2025-11-02 13:00:00;20.6;RELE_OFF
-2025-11-02 14:00:00;21.7;RELE_OFF
-2025-11-02 15:00:00;13.5;RELE_ON
-2025-11-02 16:00:00;20.1;RELE_ON
-2025-11-02 17:00:00;24.8;RELE_OFF
-2025-11-02 18:00:00;20.8;RELE_OFF
-2025-11-02 19:00:00;24.0;RELE_OFF
-2025-11-02 20:00:00;23.9;RELE_OFF
-2025-11-02 21:00:00;24.3;RELE_OFF
-2025-11-02 22:00:00;19.6;RELE_ON
-2025-11-02 23:00:00;18.0;RELE_ON
-2025-11-03 00:00:00;21.4;RELE_OFF
-2025-11-03 01:00:00;21.2;RELE_OFF
-2025-11-03 02:00:00;25.8;RELE_OFF
-2025-11-03 03:00:00;23.4;RELE_OFF
-2025-11-03 04:00:00;12.6;RELE_ON
-2025-11-03 05:00:00;22.3;RELE_OFF
-2025-11-03 06:00:00;20.0;RELE_ON
-2025-11-03 07:00:00;17.4;RELE_ON
-2025-11-03 08:00:00;19.9;RELE_ON
-2025-11-03 09:00:00;21.9;RELE_OFF
-2025-11-03 10:00:00;18.1;RELE_ON
-2025-11-03 11:00:00;29.4;RELE_OFF
-2025-11-03 12:00:00;23.2;RELE_OFF
-2025-11-03 13:00:00;22.7;RELE_OFF
-2025-11-03 14:00:00;20.2;RELE_OFF
-2025-11-03 15:00:00;21.2;RELE_OFF
-2025-11-03 16:00:00;17.0;RELE_ON
-2025-11-03 17:00:00;19.7;RELE_ON
-2025-11-03 18:00:00;14.9;RELE_ON
-2025-11-03 19:00:00;20.1;RELE_ON
-2025-11-03 20:00:00;26.5;RELE_OFF
-2025-11-03 21:00:00;24.8;RELE_OFF
-2025-11-03 22:00:00;27.3;RELE_OFF
-2025-11-03 23:00:00;20.1;RELE_OFF
-`
-};
-// FIM DO BLOCO DE DADOS INJETADOS
 
 // Variáveis de data e inicialização do menu de data/ano
 const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -301,15 +28,15 @@ for(let y = minAno; y <= maxAno; y++){
   let o = document.createElement('option');
   o.value = y;
   o.text = y;
-  // Define 2025 como padrão para mostrar dados injetados
-  if (y === 2025) { o.selected = true; } else { o.selected = false; } 
+  // Define 2025 como padrão
+  if (y === 2025) { o.selected = true; } else { o.selected = false; }
   a.appendChild(o);
 }
 meses.forEach(mes => {
     let o = document.createElement('option');
     o.value = mes;
     o.text = mes;
-    // Define novembro como padrão para mostrar dados injetados
+    // Define novembro como padrão
     if (mes === 'novembro') { o.selected = true; } else { o.selected = false; }
     m.appendChild(o);
 });
@@ -318,25 +45,16 @@ meses.forEach(mes => {
 // Funções de Carregamento
 function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
 async function load(f){
-  const filename = `${f}_${m.value}_${a.value}.log`;
   const u=url(f); 
   if(cache[u])return cache[u];
-  
-  let t = INJECTED_LOG_DATA[filename]; // Tenta pegar os dados injetados primeiro
-
-  if (!t) {
-    // Se não houver dados injetados, tenta buscar na web (comportamento real)
-    try {
-        const r=await fetch(u);
-        if(!r.ok) return {l:[], d:[]}; 
-        t = await r.text();
-    } catch(e) {
-        console.error("Erro ao carregar log dinamicamente:", u, e);
-        return {l:[],d:[]};
-    }
-  }
-
   try{
+    // CÓDIGO LIMPO: Fazer o fetch diretamente do servidor
+    const r=await fetch(u);
+    if(!r.ok) return {l:[], d:[]}; 
+	
+    const t=await r.text();
+    
+    // Processamento do log:
     const linhas=t.trim().split('\n');
     const l=[],d=[];
     // Garante que a linha começa com o formato de data/hora (202x)
@@ -344,7 +62,7 @@ async function load(f){
     
     return cache[u]={l,d};
   }catch(e){
-      console.error("Erro ao processar log:", u, e);
+      console.error("Erro ao carregar log dinamicamente:", u, e);
       return {l:[],d:[]};
   }
 }
@@ -352,9 +70,7 @@ async function load(f){
 async function loadJSON(filepath) {
     if (cache[filepath]) return cache[filepath];
     try {
-        // Para os arquivos JSON de configuração e status, fazemos mock para garantir que funcionem,
-        // mas em um servidor web real, o fetch abaixo seria o ideal.
-        
+        // MOCKS para fins de lógica e visualização em desenvolvimento
         if (filepath === './config_fileiras.json') {
              return {
               "default_ativacao": 18,
@@ -368,22 +84,34 @@ async function loadJSON(filepath) {
             };
         } 
         else if (filepath === './status.atual.json') {
-            return {
-                // Dados simulados de status atual (baseados nos seus logs de Novembro)
-                "fileiraA": [{"id": "s1", "umid": 18.0, "lat": LAT_CENTER + 0.001, "lon": LON_CENTER - 0.001}, {"id": "s2", "umid": 25.1, "lat": LAT_CENTER + 0.001, "lon": LON_CENTER + 0.001}],
-                "fileiraB": [{"id": "s3", "umid": 17.7, "lat": LAT_CENTER, "lon": LON_CENTER - 0.001}, {"id": "s4", "umid": 26.5, "lat": LAT_CENTER, "lon": LON_CENTER + 0.001}],
-                "fileiraC": [{"id": "s5", "umid": 14.4, "lat": LAT_CENTER - 0.001, "lon": LON_CENTER - 0.001}, {"id": "s6", "umid": 19.8, "lat": LAT_CENTER - 0.001, "lon": LON_CENTER + 0.001}],
-                "fileiraD": [{"id": "s7", "umid": 15.6, "lat": LAT_CENTER - 0.002, "lon": LON_CENTER}]
+             return {
+                "fileiraA": [
+                    {"id": "A1", "umid": 14.5, "lat": -22.098900, "lon": -41.783500}, 
+                    {"id": "A2", "umid": 18.2, "lat": -22.098900, "lon": -41.783600},
+                    {"id": "A3", "umid": 25.0, "lat": -22.098900, "lon": -41.783700}
+                ],
+                "fileiraB": [
+                    {"id": "B1", "umid": 19.1, "lat": -22.098954, "lon": -41.783500},
+                    {"id": "B2", "umid": 17.0, "lat": -22.098954, "lon": -41.783600}, 
+                    {"id": "B3", "umid": 26.5, "lat": -22.098954, "lon": -41.783700} 
+                ],
+                "fileiraC": [
+                    {"id": "C1", "umid": 15.0, "lat": -22.099000, "lon": -41.783500}, 
+                    {"id": "C2", "umid": 19.8, "lat": -22.099000, "lon": -41.783600}
+                ],
+                "fileiraD": [
+                    {"id": "D1", "umid": 20.0, "lat": -22.099050, "lon": -41.783500}
+                ]
             };
         }
-
-        // Se não for um mock, tenta buscar o arquivo JSON real
+        // Fim dos Mocks. No servidor real, o fetch abaixo será executado:
         const r = await fetch(filepath);
         if (!r.ok) return null;
         const data = await r.json();
         return cache[filepath] = data;
 
     } catch(e) {
+        console.error("Erro ao carregar JSON:", filepath, e);
         return null;
     }
 }
@@ -435,13 +163,13 @@ const upd=()=>{
   },10);
 };
 
-// Funções de Análise Preditiva - MANTIDAS
+// Funções de Análise Preditiva - LÓGICA DE PIOR CENÁRIO
 const tbl=()=>{
   const t=document.getElementById('tbl');
   let html = '';
 
   if (!releConfig || !currentStatus) {
-    t.innerHTML = '<tr><td colspan="2">Status indisponível.<br/><small>Verifique o arquivo config_fileiras.json e status.atual.json no servidor.</small></td></tr>';
+    t.innerHTML = '<tr><td colspan="2">Status indisponível.</td></tr>';
     return;
   }
 
@@ -451,36 +179,37 @@ const tbl=()=>{
 
     if (!data || data.length === 0 || !config || !config.reles || config.reles.length === 0) return null;
 
-    // Calcular a média de umidade da fileira (para simplificar o display)
-    const sum = data.reduce((acc, sensor) => acc + sensor.umid, 0);
-    const avg = sum / data.length;
-    const fileiraChar = fileira.slice(-1).toUpperCase();
+    // 1. Encontra a umidade MAIS BAIXA (pior cenário) entre todos os sensores da fileira.
+    const umidPiorCenario = Math.min(...data.map(sensor => sensor.umid)); 
     
-    // Usa o limite de LIGAR do primeiro relé/sensor como base de risco
-    const threshold = config.reles[0].ligar_em;
+    // 2. Usa o limite de LIGAR do primeiro relé/sensor como a referência agronômica.
+    const thresholdLigar = config.reles[0].ligar_em;
 
+    // 3. Lógica de Risco baseada no Pior Cenário
     let classCss = 'baixo';
     let statusText = 'BAIXO';
 
-    // Lógica de Risco
-    if (avg < threshold) { 
+    if (umidPiorCenario < thresholdLigar) { 
       classCss = 'alto';
-      statusText = 'ALTO';
-    } else if (avg < threshold + 8) { // Média entre LIGAR e LIGAR+8%
+      statusText = 'ALTO'; // Ativar Irrigação!
+    } else if (umidPiorCenario < thresholdLigar + 8) { 
       classCss = 'medio';
       statusText = 'MÉDIO';
     } else {
         classCss = 'baixo';
         statusText = 'BAIXO';
     }
-
-    return `<tr><td>Fileira ${fileiraChar}</td><td class="${classCss}">${statusText} (${avg.toFixed(1)}%)</td></tr>`;
+    
+    // Mostra a umidade do pior cenário na tabela
+    const fileiraChar = fileira.slice(-1).toUpperCase();
+    return `<tr><td>Fileira ${fileiraChar}</td><td class="${classCss}">${statusText} (${umidPiorCenario.toFixed(1)}%)</td></tr>`;
   }).filter(r => r !== null);
   
   html = rows.join('');
   t.innerHTML = html;
 };
 
+// Lógica de Mapa de Calor (Usa o pior cenário para a cor)
 let mapa=null;
 const map=()=>{
   const threshold = releConfig ? releConfig.default_ativacao : 20;
@@ -501,6 +230,7 @@ const map=()=>{
                   let intensity = 1 - Math.min(1, Math.max(0, (umidade - threshold) / 10));
                   if (umidade < threshold) intensity = 1; 
                   
+                  // Adiciona TODOS os sensores, não só a média
                   h.push([sensor.lat, sensor.lon, intensity]);
               });
           }
@@ -549,6 +279,7 @@ const map=()=>{
 };
 
 
+// Lógica de Alertas (pop-up) - LÓGICA DE PIOR CENÁRIO
 const alertas=()=>{
   const div=document.createElement('div');
   div.style=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
@@ -571,11 +302,12 @@ const alertas=()=>{
     const config = releConfig.fileiras[fileira];
     
     if (data && config && config.reles && config.reles.length > 0) {
-        const minThreshold = Math.min(...config.reles.map(r => r.ligar_em));
-        const avg = data.reduce((acc, sensor) => acc + sensor.umid, 0) / data.length;
-
-        if(avg < minThreshold){
-            secos.push({f: fileira, umid: avg});
+        // Encontra a menor umidade (pior cenário)
+        const umidPiorCenario = Math.min(...data.map(sensor => sensor.umid));
+        const minThreshold = config.reles[0].ligar_em; // Limite de ativação
+        
+        if(umidPiorCenario < minThreshold){
+            secos.push({f: fileira, umid: umidPiorCenario});
         }
     }
   });
@@ -591,7 +323,7 @@ const alertas=()=>{
   }
 };
 
-// --- NOVA LÓGICA DE PREVISÃO DO TEMPO ---
+// Lógica da Previsão do Tempo (Mock)
 const mockForecast = [
     { day: "Hoje", temp_min: 19, temp_max: 27, rain_prob: 30 },
     { day: "Qui", temp_min: 18, temp_max: 26, rain_prob: 70 },

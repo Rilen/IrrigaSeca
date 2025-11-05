@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IrrigaSeca 1.07</title>
+<title>IrrigaSeca 1.08</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -23,20 +23,28 @@
       <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
-    </div>
+  </div>
   <br/>
   <canvas id="graf"></canvas>
 
   <div id="pred">
     <h2>Análise Preditiva e Previsão de Seca</h2>
-    <div>
+    
+    <div id="pred-content">
+      
       <div class="blc blc-20"><h3>Status de Risco</h3>
         <table class="tbl" id="tbl">
           <tr><td colspan="2">Carregando...</td></tr>
         </table>
       </div>
-      <div class="blc blc-80"><h3>Umidade Atual - Mapa de Calor</h3>
+      
+      <div class="blc blc-50"><h3>Umidade Atual - Mapa de Calor</h3>
         <div id="map"></div>
+      </div>
+      
+      <div class="blc blc-30"><h3>Previsão do Tempo (7 Dias)</h3>
+        <div id="forecast-data">Carregando previsão...</div>
+        <p class="nota">Integração futura: OpenWeatherMap, WeatherAPI, etc.</p>
       </div>
     </div>
   </div>
