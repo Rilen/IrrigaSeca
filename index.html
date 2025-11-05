@@ -30,16 +30,13 @@
   .tbl td{padding:8px;border-bottom:1px solid #eee}
   .tbl td:last-child{text-align:right;font-weight:bold}
   .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
-  #map{height:250px;border-radius:8px;border:1px solid #ccc}
+  #map{height:320px;width:90vw;max-width:900px;margin:15px auto;border-radius:12px;border:1px solid #ccc}
+  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
   @media(min-width:768px){
     .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
     canvas#graf{height:450px}
-    #map{height:300px}
-    .blc{max-width:45%;display:inline-block;vertical-align:top}
-    #map{height:320px !important;width:90vw !important;max-width:900px;margin:15px auto;border-radius:12px}
-  @media(min-width:768px){
-    #map{height:420px !important}}
-    .blc{text-align:center}
+    #map{height:420px}
+    .blc{max-width:45%;display:inline-block;vertical-align:top;text-align:center}
   }
 </style>
 </head>
@@ -57,8 +54,8 @@
     </select></label></div>
     <div><label>Período:<select id="p">
       <option value="24h">24h</option><option value="7d">7d</option>
-      <option value="15d">15d</option>
-      <option value="30d">30d</option><option value="60d">60d</option><option value="90d">90d</option>
+      <option value="15d">15d</option><option value="30d">30d</option>
+      <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
@@ -140,12 +137,9 @@ const upd=()=>{
     chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
       plugins:{legend:{display:true}},
-      scales:{
-        x:{ticks:{maxTicksLimit:12,stepSize:step}},
-        y:{min:0,max:100,title:{display:true,text:'%'}}
-      }
+      scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'%'}}}
     }});
-    tbl();map();th=0;
+    tbl();map();alertas();th=0;
   },10);
 };
 
@@ -162,6 +156,30 @@ const map=()=>{
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
   const h=[[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]];
   L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
+};
+
+const alertas=()=>{
+  const div=document.createElement('div');
+  div.style=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+             background:#222;color:#fff;padding:15px 25px;border-radius:50px;
+             box-shadow:0 4px 20px #0008;z-index:999;font-weight:bold;
+             animation:fade 4s forwards;`;
+  document.body.appendChild(div);
+  setTimeout(()=>div.remove(),4000);
+
+  const ultimo=[];
+  files.forEach(f=>{
+    const u=url(f), d=cache[u];
+    if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]});
+  });
+  const secos=ultimo.filter(x=>x.fim<18);
+  if(secos.length){
+    div.textContent=`⚠️ IRRIGUE JÁ: ${secos.map(x=>x.f.slice(-1)).join(', ')} (${secos[0].fim.toFixed(1)}%)`;
+    div.style.background='#d9534f';
+  }else{
+    div.textContent='✅ Umidade OK em todas fileiras';
+    div.style.background='#5cb85c';
+  }
 };
 
 [a,m,p,...chks].forEach(el=>el.onclick=upd);
