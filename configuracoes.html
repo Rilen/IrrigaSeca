@@ -1,27 +1,129 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurações - IrrigaSeca</title>
     <style>
-        /* Adicionando CSS para botões de controle manual */
-        .manual-control { margin-bottom: 30px; padding: 20px; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 6px; }
-        .manual-control h3 { color: #e65100; border-bottom: none; }
-        .rele-buttons { display: flex; flex-wrap: wrap; gap: 15px; }
-        .rele-buttons button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; flex: 1 1 180px; }
-        .btn-on { background-color: #d9534f; color: white; }
-        .btn-off { background-color: #5cb85c; color: white; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f5f5f5; 
+            margin: 0; 
+            padding: 20px; 
+            font-size: 14px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: auto; 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        h2 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 30px; 
+        }
+        /* Estilo para grupos de configurações gerais */
+        .config-group { 
+            margin-bottom: 25px; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+        }
+        .config-group h3 { 
+            margin-top: 0; 
+            color: #007bff; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 10px; 
+            font-size: 16px;
+        }
+        .input-pair { 
+            display: flex; 
+            flex-direction: column; /* Padrão mobile: Empilhado */
+            gap: 15px; 
+            margin-bottom: 15px; 
+        }
+        .input-pair > div { 
+            flex: 1; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+        }
+        input[type="number"] { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        /* Controles Manuais (NOVO ESTILO) */
+        .manual-control { 
+            margin-bottom: 30px; 
+            padding: 20px; 
+            background: #fff8e1; /* Cor mais suave para destaque */
+            border: 1px solid #ffecb3; 
+            border-radius: 6px; 
+        }
+        .manual-control h3 { 
+            color: #ff9800; /* Laranja para Override */
+            border-bottom: 1px solid #ffecb3;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+        }
+        .rele-buttons { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            justify-content: center;
+        }
+        .rele-buttons button { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background-color 0.2s; 
+            flex: 1 1 120px; /* Garante que os botões se ajustem */
+        }
+        .btn-on { background-color: #d9534f; color: white; } /* Vermelho para LIGAR */
+        .btn-off { background-color: #5cb85c; color: white; } /* Verde para DESLIGAR */
         .btn-on:hover { background-color: #c9302c; }
         .btn-off:hover { background-color: #4cae4c; }
-        /* ... (Restante do CSS) ... */
+
+        /* Estilo para botão de envio e link de volta */
+        button[type="submit"] { 
+            background-color: #5cb85c; 
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            width: 100%; 
+            margin-top: 20px; 
+        }
+        button[type="submit"]:hover { background-color: #4cae4c; }
+        
+        /* Adaptação para Desktop */
+        @media (min-width: 600px) {
+            .input-pair {
+                flex-direction: row; /* Layout lado a lado */
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Painel de Configurações</h2>
+        <h2>Painel de Configurações - IrrigaSeca</h2>
 
         <div class="manual-control">
             <h3>Controle Manual dos Relés (Override)</h3>
-            <p>O controle manual sobrepõe a lógica automática até a próxima reinicialização ou intervenção do firmware.</p>
+            <p style="font-size: small; color: #666; margin-bottom: 15px;">O controle manual sobrepõe a lógica automática até a próxima intervenção do sistema.</p>
             <div class="rele-buttons">
                 <button class="btn-on" onclick="controlRele('A', 'ON')">Fileira A - LIGAR</button>
                 <button class="btn-off" onclick="controlRele('A', 'OFF')">Fileira A - DESLIGAR</button>
@@ -38,57 +140,80 @@
         </div>
         
         <form id="config-form">
+
             <div class="config-group">
-                <h3>Configuração por Fileira (Fileira A - Argiloso)</h3>
+                <h3>Lógica Global: Horário e Emergência</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraA-ligar">PMP (Ligar em %)</label>
+                        <label for="hora-inicio-noturna">Início Irrigação Noturna (Hora 24h)</label>
+                        <input type="number" id="hora-inicio-noturna" name="hora-inicio-noturna" value="1" min="0" max="23" step="1">
+                    </div>
+                    <div>
+                        <label for="hora-fim-noturna">Fim Irrigação Noturna (Hora 24h)</label>
+                        <input type="number" id="hora-fim-noturna" name="hora-fim-noturna" value="5" min="0" max="23" step="1">
+                    </div>
+                </div>
+                <div class="input-pair">
+                    <div>
+                        <label for="umidade-emergencia">Umidade de Emergência (PPM %)</label>
+                        <input type="number" id="umidade-emergencia" name="umidade-emergencia" value="10" min="1" max="15" step="1">
+                    </div>
+                    <div></div>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <h3>Fileira A (Solo Argiloso: CC 40%)</h3>
+                <p style="font-size: small;">Define o Ponto de Murcha (Ligar) e Capacidade de Campo (Desligar).</p>
+                <div class="input-pair">
+                    <div>
+                        <label for="fileiraA-ligar">Ligar (PMP %)</label>
                         <input type="number" id="fileiraA-ligar" name="fileiraA-ligar" value="15" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="fileiraA-desligar">CC (Desligar em %)</label>
+                        <label for="fileiraA-desligar">Desligar (CC %)</label>
                         <input type="number" id="fileiraA-desligar" name="fileiraA-desligar" value="40" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Configuração por Fileira (Fileira B - Arenoso)</h3>
+                <h3>Fileira B (Solo Arenoso: CC 30%)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraB-ligar">PMP (Ligar em %)</label>
+                        <label for="fileiraB-ligar">Ligar (PMP %)</label>
                         <input type="number" id="fileiraB-ligar" name="fileiraB-ligar" value="15" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="fileiraB-desligar">CC (Desligar em %)</label>
+                        <label for="fileiraB-desligar">Desligar (CC %)</label>
                         <input type="number" id="fileiraB-desligar" name="fileiraB-desligar" value="30" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Configuração por Fileira (Fileira C - Média)</h3>
+                <h3>Fileira C (Solo Média/Padrão: CC 32%)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraC-ligar">PMP (Ligar em %)</label>
+                        <label for="fileiraC-ligar">Ligar (PMP %)</label>
                         <input type="number" id="fileiraC-ligar" name="fileiraC-ligar" value="16" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="fileiraC-desligar">CC (Desligar em %)</label>
+                        <label for="fileiraC-desligar">Desligar (CC %)</label>
                         <input type="number" id="fileiraC-desligar" name="fileiraC-desligar" value="32" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Configuração por Fileira (Fileira D - Arenoso Fino)</h3>
+                <h3>Fileira D (Solo Arenoso Fino: CC 28%)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraD-ligar">PMP (Ligar em %)</label>
+                        <label for="fileiraD-ligar">Ligar (PMP %)</label>
                         <input type="number" id="fileiraD-ligar" name="fileiraD-ligar" value="17" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="fileiraD-desligar">CC (Desligar em %)</label>
+                        <label for="fileiraD-desligar">Desligar (CC %)</label>
                         <input type="number" id="fileiraD-desligar" name="fileiraD-desligar" value="28" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
@@ -97,8 +222,7 @@
             <button type="submit">Salvar Configurações (Lógica Automática)</button>
             <a href="index.html" style="display: block; margin-top: 15px; text-align: center; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
         </form>
-
-        </div>
+    </div>
 
     <script>
         // Função para simular o controle manual
@@ -112,9 +236,11 @@
         document.getElementById('config-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const form = e.target;
+            
+            // Reconstroi o objeto configs a partir dos campos do formulário
             const configs = {
                 "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
-                "default_desativacao": parseFloat(form.elements['default-desativacao'].value),
+                "default_desativacao": parseFloat(form.elements['default-desligar'].value),
                 "hora_inicio_noturna": parseFloat(form.elements['hora-inicio-noturna'].value),
                 "hora_fim_noturna": parseFloat(form.elements['hora-fim-noturna'].value),
                 "umidade_emergencia": parseFloat(form.elements['umidade-emergencia'].value),
@@ -133,12 +259,14 @@
         
         // Função para carregar valores default (para simulação)
         document.addEventListener('DOMContentLoaded', () => {
-             // Mock de carregamento dos valores globais se existissem
+             // Carrega valores globais
              document.getElementById('default-ativacao').value = 18;
              document.getElementById('default-desativacao').value = 25;
              document.getElementById('hora-inicio-noturna').value = 1;
              document.getElementById('hora-fim-noturna').value = 5;
              document.getElementById('umidade-emergencia').value = 10;
+
+             // Carrega valores das fileiras (já setados no HTML, mas aqui seria o ponto de leitura da API)
         });
 
     </script>
