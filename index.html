@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IrrigaSeca</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
@@ -32,7 +31,7 @@
   .tbl td:last-child{text-align:right;font-weight:bold}
   .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
   #map{height:320px;width:90vw;max-width:900px;margin:15px auto;border-radius:12px;border:1px solid #ccc}
-  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-20px)}}
+  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
   @media(min-width:768px){
     .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
     canvas#graf{height:450px}
@@ -56,8 +55,7 @@
     <div><label>Período:<select id="p">
       <option value="24h">24h</option><option value="7d">7d</option>
       <option value="15d">15d</option><option value="30d">30d</option>
-      <option value="60d">60d</option>
-      <option value="90d">90d</option>
+      <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
@@ -72,7 +70,7 @@
   <div id="pred">
     <h2>Análise Preditiva</h2>
     <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">
-      <div class="blc"><h3>Próximas 48h</h3>
+      <div class="blc"><h3>Próximas 12h</h3>
         <table class="tbl" id="tbl"></table>
       </div>
       <div class="blc"><h3>Mapa de Calor</h3>
@@ -85,112 +83,106 @@
 <script>
 const files=["fileiraA","fileiraB","fileiraC","fileiraD"];
 const cores=['#00f','#f00','#0f0','#fa0'];
-const MAX=500;
-let chart=null,trend=null,linha=null,mapa=null,th=0;
+const MAX=500; let chart=null,th=0;
 const cache={};
 
-const els={a:document.getElementById('a'),m:document.getElementById('m'),p:document.getElementById('p'),
-           ctx:document.getElementById('graf').getContext('2d'),chks:document.querySelectorAll('.chk input')};
+const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
+const ctx=document.getElementById('graf').getContext('2d');
+const chks=document.querySelectorAll('.chk input');
 
-for(let y=2022;y<=2027;y++){const o=document.createElement('option');o.value=o.text=y;els.a.appendChild(o);}
-els.a.value=2025;
+for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
+a.value=2025;
 
-const url=f=>`./data/${f}_${els.m.value}_${els.a.value}.log`;
-
-const load=async f=>{
+function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
+async function load(f){
   const u=url(f); if(cache[u])return cache[u];
   try{
     const r=await fetch(u);
     if(!r.ok)return {l:[],d:[]};
     const t=await r.text();
+    const linhas=t.trim().split('\n');
     const l=[],d=[];
-    t.trim().split('\n').forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
+    linhas.forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
     return cache[u]={l,d};
-  }catch{return {l:[],d:[]};}
-};
+  }catch(e){return {l:[],d:[]};}
+}
 
-const range=(len,p)=>{
-  const cuts={24:24,7:168,15:360,30:720,60:1440,90:2160};
-  return p in cuts?[Math.max(0,len-cuts[p]),len]:[0,len];
-};
-
-const sample=(arr,len)=>len>MAX?arr.filter((_,i)=>i%Math.ceil(len/MAX)===0):arr;
+function range(len,per){
+  if(per==='24h')return [Math.max(0,len-24),len];
+  if(per==='7d')return [Math.max(0,len-168),len];
+  if(per==='15d')return [Math.max(0,len-360),len];
+  if(per==='30d')return [Math.max(0,len-720),len];
+  if(per==='60d')return [Math.max(0,len-1440),len];
+  if(per==='90d')return [Math.max(0,len-2160),len];
+  return [0,len];
+}
 
 const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
-    const sel=[...els.chks].filter(c=>c.checked).map(c=>c.value);
-    let L=[],DS=[],mx=0;
-    for(const f of sel){
+    const sel=[...chks].filter(c=>c.checked).map(c=>c.value);
+    let L=[],DS=[],mx=0,per=p.value;
+    for(let f of sel){
       const {l,d}=await load(f);
       if(!l.length)continue;
-      const [i,e]=range(l.length,els.p.value);
-      const ls=l.slice(i,e), ds=sample(d.slice(i,e),e-i);
+      const [i,e]=range(l.length,per);
+      let ls=l.slice(i,e), ds=d.slice(i,e);
+      if(ds.length>MAX)ds=ds.filter((_,k)=>k%Math.ceil(ds.length/MAX)===0);
       if(ls.length>mx){mx=ls.length;L=ls;}
       DS.push({label:f,data:ds,borderColor:cores[files.indexOf(f)],tension:.1,pointRadius:2,fill:false});
     }
-    const dias=els.p.value==='15d'?15:els.p.value==='30d'?30:els.p.value==='60d'?60:els.p.value==='90d'?90:els.p.value==='7d'?7:1;
-    const step=mx?Math.ceil(mx/(12*dias)):1;
-
-    chart?.destroy();
-    chart=new Chart(els.ctx,{type:'line',data:{labels:L,datasets:DS},options:{
+    const dias = per==='15d'?15 : per==='30d'?30 : per==='60d'?60 : per==='90d'?90 : per==='7d'?7 : per==='24h'?1 : 999;
+    const step = mx>0 ? Math.ceil(mx/(12*dias)) : 1;
+    if(chart)chart.destroy();
+    chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
-      plugins:{legend:{display:true},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},
-      scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}},y:{min:0,max:100,title:{display:true,text:'%'}}}
+      plugins:{legend:{display:true}},
+      scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'%'}}}
     }});
-
-    tbl(); mapa&&mapa.remove(); map(); trend&&trend.destroy(); linha&&linha.destroy(); makeTrend(); makeLinha(); alertas(); th=0;
+    tbl();map();alertas();th=0;
   },10);
 };
 
 const tbl=()=>{
   const t=document.getElementById('tbl');
-  const r=[{f:'A',p:65},{f:'B',p:10},{f:'C',p:5},{f:'D',p:42}];
-  t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.p<18?'alto':x.p<30?'medio':'baixo'}">${x.p}% (48h)</td></tr>`).join('');
-  document.querySelector('#pred h2').textContent=`Previsão 48h • ${new Date(Date.now()+48*36e5).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}`;
+  const r=[{f:'A',c:'baixo'},{f:'B',c:'baixo'},{f:'C',c:'alto'},{f:'D',c:'medio'}];
+  t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.c}">${x.c.toUpperCase()}</td></tr>`).join('');
 };
 
+let mapa=null;
 const map=()=>{
-  mapa=L.map('map',{zoomControl:false}).setView([-23.55,-46.63],15);
+  if(mapa)mapa.remove();
+  mapa=L.map('map').setView([-23.55,-46.63],15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-  L.heatLayer([[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]],
-    {radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
-  setTimeout(()=>mapa.invalidateSize(),150);
-};
-
-const makeTrend=()=>{
-  let c=document.getElementById('trend');
-  if(!c){c=document.createElement('canvas');c.id='trend';c.height=180;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
-  const vals=files.map(f=>{const d=cache[url(f)];return d?d.d.slice(-24).reduce((a,b)=>a+b,0)/24:50;});
-  trend=new Chart(c.getContext('2d'),{type:'bar',data:{labels:['A','B','C','D'],datasets:[{label:'Tendência 24h',data:vals,backgroundColor:vals.map(v=>v<18?'#d9534f':v<30?'#f0ad4e':'#5cb85c')}]},options:{
-    animation:false,plugins:{legend:{display:false},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},scales:{y:{min:0,max:100}}
-  }});
-};
-
-const makeLinha=()=>{
-  let c=document.getElementById('linha');
-  if(!c){c=document.createElement('canvas');c.id='linha';c.height=200;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
-  const labels=[], sets=[[], [], [], []];
-  files.forEach((f,i)=>{const d=cache[url(f)];if(d){d.l.slice(-48).forEach(t=>labels.push(t.slice(11,16)));d.d.slice(-48).forEach(v=>sets[i].push(v));}});
-  linha=new Chart(c.getContext('2d'),{type:'line',data:{labels,datasets:files.map((f,i)=>({label:f.slice(-1),data:sets[i],borderColor:cores[i]}))},options:{
-    animation:false,plugins:{legend:{position:'top'},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},scales:{y:{min:0,max:100}}
-  }});
+  const h=[[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]];
+  L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
 };
 
 const alertas=()=>{
   const div=document.createElement('div');
   div.style=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-             background:#222;color:#fff;padding:12px 24px;border-radius:50px;
+             background:#222;color:#fff;padding:15px 25px;border-radius:50px;
              box-shadow:0 4px 20px #0008;z-index:999;font-weight:bold;
-             animation:fade 3.5s forwards;`;
+             animation:fade 4s forwards;`;
   document.body.appendChild(div);
-  setTimeout(()=>div.remove(),3500);
-  const secos=files.flatMap(f=>{const d=cache[url(f)];return d&&d.d.length&&d.d.at(-1)<18?[{f:f.slice(-1),v:d.d.at(-1)}]:[]});
-  div.textContent=secos.length?`⚠️ IRRIGUE: ${secos.map(x=>x.f).join(', ')} (${secos[0].v.toFixed(1)}%)`:'✅ Umidade OK';
-  div.style.background=secos.length?'#d9534f':'#5cb85c';
+  setTimeout(()=>div.remove(),4000);
+
+  const ultimo=[];
+  files.forEach(f=>{
+    const u=url(f), d=cache[u];
+    if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]});
+  });
+  const secos=ultimo.filter(x=>x.fim<18);
+  if(secos.length){
+    div.textContent=`⚠️ IRRIGUE JÁ: ${secos.map(x=>x.f.slice(-1)).join(', ')} (${secos[0].fim.toFixed(1)}%)`;
+    div.style.background='#d9534f';
+  }else{
+    div.textContent='✅ Umidade OK em todas fileiras';
+    div.style.background='#5cb85c';
+  }
 };
 
-[els.a,els.m,els.p,...els.chks].forEach(el=>el.onclick=upd);
+[a,m,p,...chks].forEach(el=>el.onclick=upd);
 upd();
 </script>
 </body>
