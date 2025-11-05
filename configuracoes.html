@@ -39,7 +39,25 @@
             </div>
 
             <div class="config-group">
-                <h3>Fileira A (Ex: Solo Argiloso/Alta Retenção)</h3>
+                <h3>Lógica de Horário e Emergência (Global)</h3>
+                <div class="input-pair">
+                    <div>
+                        <label for="hora-inicio-noturna">Início Irrigação Noturna (Hora 24h)</label>
+                        <input type="number" id="hora-inicio-noturna" value="1" min="0" max="23" step="1">
+                    </div>
+                    <div>
+                        <label for="hora-fim-noturna">Fim Irrigação Noturna (Hora 24h)</label>
+                        <input type="number" id="hora-fim-noturna" value="5" min="0" max="23" step="1">
+                    </div>
+                </div>
+                <div>
+                    <label for="umidade-emergencia">Umidade de Emergência (%)</label>
+                    <p style="font-size: small; margin-top: 0;">Ligar a qualquer hora do dia se cair abaixo deste valor (Ex: 10%).</p>
+                    <input type="number" id="umidade-emergencia" value="10" min="1" max="15" step="1">
+                </div>
+            </div>
+            <div class="config-group">
+                <h3>Fileira A (Ex: Solo Argiloso - CC: 40%)</h3>
                 <p>Configurações para o sensor de **pior cenário** da Fileira A.</p>
                 <div class="input-pair">
                     <div>
@@ -54,7 +72,7 @@
             </div>
 
             <div class="config-group">
-                <h3>Fileira B (Ex: Solo Arenoso/Baixa Retenção)</h3>
+                <h3>Fileira B (Ex: Solo Arenoso - CC: 30%)</h3>
                 <p>Configurações para o sensor de **pior cenário** da Fileira B.</p>
                 <div class="input-pair">
                     <div>
@@ -72,7 +90,7 @@
             <a href="index.html" style="display: block; text-align: center; margin-top: 15px; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
         </form>
 
-        <p style="margin-top: 30px; text-align: center; color: #555;">*A ação abaixo simula a chamada POST para o controlador.</p>
+        <p style="margin-top: 30px; text-align: center; color: #555;">*A ação simula a chamada POST para o controlador com a lógica de horário e emergência.</p>
     </div>
 
     <script>
@@ -84,6 +102,11 @@
             const configs = {
                 "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
                 "default_desativacao": parseFloat(form.elements['default-desativacao'].value),
+                // NOVOS PARÂMETROS DE HORÁRIO/EMERGÊNCIA
+                "hora_inicio_noturna": parseInt(form.elements['hora-inicio-noturna'].value, 10),
+                "hora_fim_noturna": parseInt(form.elements['hora-fim-noturna'].value, 10),
+                "umidade_emergencia": parseFloat(form.elements['umidade-emergencia'].value),
+                // FIM NOVOS PARÂMETROS
                 "fileiras": {
                     "fileiraA": { 
                         "reles": [{ 
@@ -99,40 +122,14 @@
                             "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) 
                         }] 
                     }
-                    // Adicionar mais fileiras aqui...
                 }
             };
             
             console.log('Novas Configurações Prontas para Envio:', configs);
 
             // 2. Simulação da Chamada POST (Enviando para o ESP32/Servidor)
-            const simulatedEndpoint = 'http://192.168.4.1/config'; // Exemplo de IP do ESP32 ou API
-
-            try {
-                // No ambiente de produção, este 'fetch' seria descomentado.
-                /*
-                const response = await fetch(simulatedEndpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(configs),
-                });
-
-                if (response.ok) {
-                    alert('✅ Configurações salvas e enviadas com sucesso para o controlador!');
-                } else {
-                    alert('⚠️ Erro ao enviar configurações (Status: ' + response.status + '). Verifique o ESP32.');
-                }
-                */
-                
-                // SIMULAÇÃO COMPLETA:
-                alert('✅ Configurações salvas e enviadas com sucesso (Simulado)!');
-                
-            } catch (error) {
-                console.error('Erro de conexão simulado:', error);
-                alert('⚠️ Erro de conexão (Simulado). O ESP32 está offline ou o IP está incorreto.');
-            }
+            alert('✅ Configurações salvas e enviadas com sucesso (Simulado)! O ESP32 agora tem a lógica de irrigação noturna e emergencial.');
+            
         });
     </script>
 </body>
