@@ -167,6 +167,25 @@ canvas#graf {
     border-radius: 3px;
 }
 
+#telemetry {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+#tbl-telemetria th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Status Lógica Simulado */
+.status-on { color: #d9534f; font-weight: bold; } /* Alto Risco/Relé ON */
+.status-off { color: #5cb85c; font-weight: bold; } /* Baixo Risco/Relé OFF */
+.status-scheduled { color: #f0ad4e; font-weight: bold; } /* Agendado */
+
 @keyframes fade {
     0% {
         opacity: 0;
