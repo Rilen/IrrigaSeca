@@ -57,7 +57,6 @@
 <div id="c">
   <h2>Gráfico de Umidade - IrrigaSeca</h2>
   
-  <!-- Menu de Filtros (Corrigido para evitar conflito de ID) -->
   <div id="menu-filters" class="menu">
     <div><label>Ano:<select id="a"></select></label></div>
     <div><label>Mês:<select id="m"></select></label></div> 
@@ -68,12 +67,8 @@
       <option value="all" selected>Tudo</option>
     </select></label></div>
   </div>
-  <!-- Fim do Menu de Filtros -->
-  </br>
-  
   <canvas id="graf"></canvas>
 
-  <!-- Seção Análise Preditiva (ID corrigido para pred-area) -->
   <div id="pred-area">
     <h2>Análise Preditiva</h2>
     <div>
@@ -101,7 +96,10 @@ const ctx=document.getElementById('graf').getContext('2d');
 const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const hoje = new Date();
 const anoAtual = hoje.getFullYear();
-const mesAtual = meses[hoje.getMonth()];
+// Definindo o mês atual como Novembro, conforme simulação
+const mesAtual = 'novembro'; 
+// Ajuste para o ano de simulação
+const anoSimulacao = 2025; 
 const minAno = 2022; 
 const maxAno = 2027; 
 
@@ -109,7 +107,7 @@ for(let y = minAno; y <= maxAno; y++){
   let o = document.createElement('option');
   o.value = y;
   o.text = y;
-  if (y === anoAtual) { o.selected = true; }
+  if (y === anoSimulacao) { o.selected = true; } // Seleciona o ano de simulação
   a.appendChild(o);
 }
 meses.forEach(mes => {
@@ -166,18 +164,21 @@ const upd=()=>{
     if(chart)chart.destroy();
     chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
-      plugins:{legend:{display:true, onClick: (e, legendItem, chart) => {
-          // Lógica para permitir clique na legenda
+      plugins:{legend:{
+        display:true, 
+        onClick: (e, legendItem, chart) => {
+          // Lógica para permitir clique na legenda (CUSTOMIZADA)
           const index = legendItem.datasetIndex;
           const ci = chart;
           const meta = ci.getDatasetMeta(index);
 
           // Alterna a visibilidade
           meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
-
-          // Atualiza o gráfico (sem chamar upd, pois o Chart.js faz o trabalho)
+          
+          // O Chart.js já trata a visibilidade, então apenas atualizamos o gráfico
           ci.update();
-      }}},
+        }
+      }},
       scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'%'}}}
     }});
     tbl();map();alertas();th=0;
@@ -226,7 +227,7 @@ const alertas=()=>{
 };
 
 // Event handlers simplificados para os selects (ano, mês, período)
-[a,m,p].forEach(el=>el.onchange=upd); // Alterado de onclick para onchange
+[a,m,p].forEach(el=>el.onchange=upd); 
 upd();
 </script>
 </body>
