@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IrrigaSeca Mobile</title>
+<title>IrrigaSeca</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -52,12 +52,9 @@
       <option>dezembro</option>
     </select></label></div>
     <div><label>Período:<select id="p">
-      <option value="24h">24 horas</option>
-      <option value="7d">7 dias</option>
-      <option value="15d">15 dias</option>
-      <option value="30d">30 dias</option>
-      <option value="60d">60 dias</option>
-      <option value="90d">90 dias</option>
+      <option value="24h">24h</option><option value="7d">7d</option>
+      <option value="15d">15d</option>
+      <option value="30d">30d</option><option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
@@ -123,25 +120,28 @@ const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
     const sel=[...chks].filter(c=>c.checked).map(c=>c.value);
-    let L=[],DS=[],mx=0;
+    let L=[],DS=[],mx=0,per=p.value;
     for(let f of sel){
       const {l,d}=await load(f);
       if(!l.length)continue;
-      const [i,e]=range(l.length,p.value);
+      const [i,e]=range(l.length,per);
       let ls=l.slice(i,e), ds=d.slice(i,e);
       if(ds.length>MAX)ds=ds.filter((_,k)=>k%Math.ceil(ds.length/MAX)===0);
       if(ls.length>mx){mx=ls.length;L=ls;}
       DS.push({label:f,data:ds,borderColor:cores[files.indexOf(f)],tension:.1,pointRadius:2,fill:false});
     }
+    const dias = per==='15d'?15 : per==='30d'?30 : per==='60d'?60 : per==='90d'?90 : per==='7d'?7 : per==='24h'?1 : 999;
+    const step = mx>0 ? Math.ceil(mx/(12*dias)) : 1;
     if(chart)chart.destroy();
     chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
       plugins:{legend:{display:true}},
-      scales:{y:{min:0,max:100,title:{display:true,text:'%'}}}
+      scales:{
+        x:{ticks:{maxTicksLimit:12,stepSize:step}},
+        y:{min:0,max:100,title:{display:true,text:'%'}}
+      }
     }});
-    tbl();
-    map();
-    th=0;
+    tbl();map();th=0;
   },10);
 };
 
@@ -151,14 +151,15 @@ const tbl=()=>{
   t.innerHTML=r.map(x=>`<tr><td>Fileira ${x.f}</td><td class="${x.c}">${x.c.toUpperCase()}</td></tr>`).join('');
 };
 
+let mapa=null;
 const map=()=>{
-  const mp=L.map('map').setView([-23.55,-46.63],15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mp);
-  const h=[[ -23.548,-46.635,0.2],[ -23.549,-46.630,0.2],[ -23.552,-46.632,1],[ -23.551,-46.637,0.6]];
-  L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mp);
+  if(mapa)mapa.remove();
+  mapa=L.map('map').setView([-23.55,-46.63],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+  const h=[[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]];
+  L.heatLayer(h,{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
 };
 
-// NOVO (funciona em celular)
 [a,m,p,...chks].forEach(el=>el.onclick=upd);
 upd();
 </script>
