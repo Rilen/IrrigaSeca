@@ -15,19 +15,13 @@
   .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
   .menu div{width:100%;max-width:300px}
   
-  /* Estilos para os novos "checkboxes" (labels) */
+  /* Estilos para os rótulos de fileira (agora simplificados) */
   .chk label{display:flex;align-items:center;gap:8px;cursor:pointer}
-  .chk label[data-checked="true"] span{font-weight:bold;text-decoration:none;}
-  .chk label[data-checked="false"] span{text-decoration:line-through;color:#aaa;font-weight:normal;}
-
-  /* Estilização da bolinha de cor (mantida no span:before) */
-  .chk span{position:relative;padding-left:22px}
-  .chk span::before{content:'';position:absolute;left:0;width:14px;height:14px;border-radius:4px;top:calc(50% - 7px);}
   
-  #fA span::before{background:#00f}
-  #fB span::before{background:#f00}
-  #fC span::before{background:#0f0}
-  #fD span::before{background:#fa0}
+  /* Estilo que simula o desativado (riscado e cinza) */
+  .chk label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
+  /* Estilo que simula o ativado (negrito) */
+  .chk label[data-checked="true"] {font-weight:bold;text-decoration:none;}
   
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
   #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
@@ -65,10 +59,10 @@
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
-      <label id="fA" data-fileira="fileiraA" data-checked="true"><span>Fileira A</span></label>
-      <label id="fB" data-fileira="fileiraB" data-checked="true"><span>Fileira B</span></label>
-      <label id="fC" data-fileira="fileiraC" data-checked="true"><span>Fileira C</span></label>
-      <label id="fD" data-fileira="fileiraD" data-checked="true"><span>Fileira D</span></label>
+      <label id="fA" data-fileira="fileiraA" data-checked="true">Fileira A</label>
+      <label id="fB" data-fileira="fileiraB" data-checked="true">Fileira B</label>
+      <label id="fC" data-fileira="fileiraC" data-checked="true">Fileira C</label>
+      <label id="fD" data-fileira="fileiraD" data-checked="true">Fileira D</label>
     </div>
   </div>
   <canvas id="graf"></canvas>
@@ -126,7 +120,7 @@ function range(len,per){
 const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
-    // Lógica atualizada para obter o estado de seleção dos novos labels
+    // Lógica atualizada para obter o estado de seleção dos labels
     const sel = [...chkLabels]
         .filter(label => label.getAttribute('data-checked') === 'true')
         .map(label => label.getAttribute('data-fileira')); 
@@ -182,8 +176,6 @@ const alertas=()=>{
   const ultimo=[];
   files.forEach(f=>{
     const u=url(f), d=cache[u];
-    // Esta lógica não funciona bem sem um servidor mockando o "último estado"
-    // Mantendo a lógica original baseada no último ponto do log
     if(d && d.d.length) ultimo.push({f,fim:d.d[d.d.length-1]}); 
   });
   const secos=ultimo.filter(x=>x.fim<18);
@@ -196,17 +188,15 @@ const alertas=()=>{
   }
 };
 
-// Adiciona o novo comportamento de clique para os rótulos de fileira
+// Event handler simplificado
 chkLabels.forEach(label => {
-    label.onclick = (e) => {
-        // Alterna o estado do atributo data-checked
+    label.onclick = () => {
         const isChecked = label.getAttribute('data-checked') === 'true';
         label.setAttribute('data-checked', isChecked ? 'false' : 'true');
         upd();
     };
 });
 
-// Event listeners para os selects (ano, mês, período) e agora para os labels
 [a,m,p,...chkLabels].forEach(el=>el.onclick=upd);
 upd();
 </script>
