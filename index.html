@@ -131,15 +131,19 @@ const map=()=>{
 };
 
 const makeTrend=()=>{
-  let c=document.getElementById('trend')||(()=>{c=document.createElement('canvas');c.id='trend';c.height=180;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);return c;})();
+  let c=document.getElementById('trend');
+  if(!c){c=document.createElement('canvas');c.id='trend';c.height=180;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
   const vals=files.map(f=>{const d=cache[url(f)];return d?d.d.slice(-24).reduce((a,b)=>a+b,0)/24:50;});
+  trend?.destroy();
   trend=new Chart(c.getContext('2d'),{type:'bar',data:{labels:['A','B','C','D'],datasets:[{label:'24h',data:vals,backgroundColor:vals.map(v=>v<18?'#d9534f':v<30?'#f0ad4e':'#5cb85c')}]},options:{animation:false,plugins:{legend:{display:false},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}}},scales:{y:{min:0,max:100}}}});
 };
 
 const makeLinha=()=>{
-  let c=document.getElementById('linha')||(()=>{c=document.createElement('canvas');c.id='linha';c.height=200;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);return c;})();
+  let c=document.getElementById('linha');
+  if(!c){c=document.createElement('canvas');c.id='linha';c.height=200;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
   const labels=[], sets=[[], [], [], []];
   files.forEach((f,i)=>{const d=cache[url(f)];if(d){d.l.slice(-48).forEach(t=>labels.push(t.slice(11,16)));d.d.slice(-48).forEach(v=>sets[i].push(v));}});
+  linha?.destroy();
   linha=new Chart(c.getContext('2d'),{type:'line',data:{labels,datasets:files.map((f,i)=>({label:f.slice(-1),data:sets[i],borderColor:cores[i]}))},options:{animation:false,plugins:{legend:{position:'top'},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}}},scales:{y:{min:0,max:100}}}});
 };
 
