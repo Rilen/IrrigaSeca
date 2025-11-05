@@ -16,48 +16,26 @@
   .menu div{width:100%;max-width:300px}
   
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
-  
-  /* Seção de Análise Preditiva */
-  #pred-area{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
-  
-  /* Contêiner dos blocos de Análise e Mapa */
-  #pred-area > div {
-    display: flex;
-    flex-direction: column; /* Empilhamento vertical no mobile */
-    gap: 20px;
-    justify-content: center;
-  }
-  
-  .blc{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin:10px 0; width: 100%;} /* 100% de largura no mobile */
-  
+  #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
+  .blc{background:#fff;border:1px solid #ddd;border-radius:8px;padding:15px;margin:10px 0}
   .tbl{width:100%;border-collapse:collapse}
   .tbl td{padding:8px;border-bottom:1px solid #eee}
   .tbl td:last-child{text-align:right;font-weight:bold}
   .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
-  
-  /* Mapa de Calor */
-  #map{height:320px;width:100%;margin:0;border-radius:12px;border:1px solid #ccc}
-  
+  #map{height:320px;width:90vw;max-width:900px;margin:15px auto;border-radius:12px;border:1px solid #ccc}
   @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
-  
   @media(min-width:768px){
     .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
     canvas#graf{height:450px}
     #map{height:420px}
-    
-    /* Retorna ao layout lado a lado no desktop */
-    #pred-area > div {
-        flex-direction: row; 
-    }
     .blc{max-width:45%;display:inline-block;vertical-align:top;text-align:center}
   }
 </style>
 </head>
 <body>
 <div id="c">
-  <h2>Gráfico de Umidade - IrrigaSeca</h2>
-  
-  <div id="menu-filters" class="menu">
+  <h2>IrrigaSeca</h2>
+  <div class="menu">
     <div><label>Ano:<select id="a"></select></label></div>
     <div><label>Mês:<select id="m"></select></label></div> 
     <div><label>Período:<select id="p">
@@ -66,12 +44,13 @@
       <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
-  </div>
+    
+    </div>
   <canvas id="graf"></canvas>
 
-  <div id="pred-area">
+  <div id="pred">
     <h2>Análise Preditiva</h2>
-    <div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">
       <div class="blc"><h3>Próximas 12h</h3>
         <table class="tbl" id="tbl"></table>
       </div>
@@ -96,10 +75,7 @@ const ctx=document.getElementById('graf').getContext('2d');
 const meses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const hoje = new Date();
 const anoAtual = hoje.getFullYear();
-// Definindo o mês atual como Novembro, conforme simulação
-const mesAtual = 'novembro'; 
-// Ajuste para o ano de simulação
-const anoSimulacao = 2025; 
+const mesAtual = meses[hoje.getMonth()];
 const minAno = 2022; 
 const maxAno = 2027; 
 
@@ -107,7 +83,7 @@ for(let y = minAno; y <= maxAno; y++){
   let o = document.createElement('option');
   o.value = y;
   o.text = y;
-  if (y === anoSimulacao) { o.selected = true; } // Seleciona o ano de simulação
+  if (y === anoAtual) { o.selected = true; }
   a.appendChild(o);
 }
 meses.forEach(mes => {
@@ -146,7 +122,7 @@ function range(len,per){
 const upd=()=>{
   if(th)return; th=1;
   setTimeout(async()=>{
-    // Todas as fileiras são carregadas
+    // Simplificado: Todas as fileiras são carregadas por padrão (o controle de visibilidade é da legenda do Chart.js)
     const sel = files; 
 
     let L=[],DS=[],mx=0,per=p.value;
@@ -164,21 +140,7 @@ const upd=()=>{
     if(chart)chart.destroy();
     chart=new Chart(ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
-      plugins:{legend:{
-        display:true, 
-        onClick: (e, legendItem, chart) => {
-          // Lógica para permitir clique na legenda (CUSTOMIZADA)
-          const index = legendItem.datasetIndex;
-          const ci = chart;
-          const meta = ci.getDatasetMeta(index);
-
-          // Alterna a visibilidade
-          meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
-          
-          // O Chart.js já trata a visibilidade, então apenas atualizamos o gráfico
-          ci.update();
-        }
-      }},
+      plugins:{legend:{display:true}},
       scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'%'}}}
     }});
     tbl();map();alertas();th=0;
@@ -227,7 +189,7 @@ const alertas=()=>{
 };
 
 // Event handlers simplificados para os selects (ano, mês, período)
-[a,m,p].forEach(el=>el.onchange=upd); 
+[a,m,p].forEach(el=>el.onclick=upd);
 upd();
 </script>
 </body>
