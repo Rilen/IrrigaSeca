@@ -41,56 +41,24 @@ meses.forEach(mes => {
 
 
 // Funções de Carregamento
-function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
+function url(f){return `./data/${f}_${m.value}_${a.value}.log`;} // Espera o arquivo em /data/
 async function load(f){
   const u=url(f); 
   if(cache[u])return cache[u];
   try{
-    // Acessando os arquivos de log que você forneceu
-    const logMap = {
-        "fileiraC_novembro_2025.log": [/* Conteúdo do log C */],
-        "fileiraD_novembro_2025.log": [/* Conteúdo do log D */],
-        "fileiraB_novembro_2025.log": [/* Conteúdo do log B */],
-        "fileiraA_novembro_2025.log": [/* Conteúdo do log A */]
-        // ... adicione outros mapeamentos conforme necessário (simulação)
-    };
-    
-    // No ambiente real, você faria um `fetch(u)` como está comentado abaixo:
-    /*
+    // --- LÓGICA DE BUSCA REAL DO ARQUIVO LOG NA WEB ---
     const r=await fetch(u);
     if(!r.ok) return {l:[], d:[]}; 
 	
     const t=await r.text();
-    */
+    // --- FIM DA LÓGICA DE BUSCA REAL ---
+    
     // Processamento do log:
-    // SIMULAÇÃO: No ambiente de execução do assistente, usamos os dados carregados:
-    let logContent = '';
-    const filename = `${f}_${m.value}_${a.value}.log`;
-
-    // Apenas para fins de demonstração, simulando o carregamento dos arquivos fornecidos
-    if (f === 'fileiraC' && m.value === 'novembro' && a.value === '2025') {
-        // Usamos um trecho do log C para simular
-        logContent = `
-        2025-11-01 07:00:00;22.5;RELE_OFF
-        2025-11-01 08:00:00;21.1;RELE_OFF
-        2025-11-01 09:00:00;21.0;RELE_OFF
-        2025-11-01 10:00:00;20.5;RELE_OFF
-        2025-11-01 11:00:00;15.9;RELE_ON
-        2025-11-01 12:00:00;22.3;RELE_OFF
-        2025-11-01 13:00:00;21.2;RELE_OFF
-        2025-11-01 14:00:00;16.4;RELE_ON
-        2025-11-01 15:00:00;14.4;RELE_ON
-        2025-11-01 16:00:00;17.1;RELE_ON
-        2025-11-01 17:00:00;21.6;RELE_OFF
-        `;
-    }
-    // ... Aqui você repetiria para B, A e D
-
-    if (!logContent) return {l:[], d:[]};
-
-    const linhas = t.trim().split('\n');
+    const linhas=t.trim().split('\n');
     const l=[],d=[];
+    // Garante que a linha começa com o formato de data/hora (202x)
     linhas.forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
+    
     return cache[u]={l,d};
   }catch(e){
       console.error("Erro ao carregar log:", u, e);
@@ -101,39 +69,10 @@ async function load(f){
 async function loadJSON(filepath) {
     if (cache[filepath]) return cache[filepath];
     try {
-        /*
         const r = await fetch(filepath);
-        if (!r.ok) return null;
+        if (!r.ok) return null; // Retorna null se não encontrar (ou 404)
         const data = await r.json();
         return cache[filepath] = data;
-        */
-        
-        // SIMULAÇÃO: Carregando o novo modelo de configuração
-        if (filepath === './config_fileiras.json') {
-            return {
-              "default_ativacao": 18,
-              "default_desativacao": 25,
-              "fileiras": {
-                "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 60}] },
-                "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 18, "desligar_em": 27}] },
-                "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] },
-                "fileiraD": { "reles": [{"id": "sensor_principal", "ligar_em": 17, "desligar_em": 28}] }
-              }
-            };
-        } 
-        // SIMULAÇÃO: Mapeamento de status atual (para o mapa/tabela)
-        else if (filepath === './status.atual.json') {
-            return {
-                "fileiraA": [{"id": "s1", "umid": 16.5, "lat": LAT_CENTER + 0.001, "lon": LON_CENTER - 0.001}, {"id": "s2", "umid": 25.1, "lat": LAT_CENTER + 0.001, "lon": LON_CENTER + 0.001}],
-                "fileiraB": [{"id": "s3", "umid": 18.1, "lat": LAT_CENTER, "lon": LON_CENTER - 0.001}, {"id": "s4", "umid": 26.5, "lat": LAT_CENTER, "lon": LON_CENTER + 0.001}],
-                "fileiraC": [{"id": "s5", "umid": 14.4, "lat": LAT_CENTER - 0.001, "lon": LON_CENTER - 0.001}, {"id": "s6", "umid": 19.8, "lat": LAT_CENTER - 0.001, "lon": LON_CENTER + 0.001}],
-                "fileiraD": [{"id": "s7", "umid": 17.2, "lat": LAT_CENTER - 0.002, "lon": LON_CENTER}]
-            };
-        }
-
-        console.error("Erro ao carregar JSON: Arquivo não simulado", filepath);
-        return null;
-
     } catch(e) {
         console.error("Erro ao carregar JSON:", filepath, e);
         return null;
@@ -156,9 +95,10 @@ const upd=()=>{
   setTimeout(async()=>{
     const sel = files; 
 
-    // NOVO: Carregar dados de status e a NOVA configuração do relé
-    currentStatus = await loadJSON('./status.atual.json');
-    releConfig = await loadJSON('./config_fileiras.json'); // Alterado para novo arquivo
+    // ATUALIZAÇÃO: As chamadas loadJSON agora buscarão os arquivos reais no servidor.
+    // Você precisa garantir que 'status.atual.json' e 'config_fileiras.json' estejam acessíveis.
+    currentStatus = await loadJSON('./status.atual.json'); 
+    releConfig = await loadJSON('./config_fileiras.json');
     
     let L=[],DS=[],mx=0,per=p.value;
     for(let f of sel){
@@ -184,13 +124,14 @@ const upd=()=>{
   },10);
 };
 
-// Funções de Análise Preditiva
+// Funções de Análise Preditiva - MANTIDAS
 const tbl=()=>{
   const t=document.getElementById('tbl');
   let html = '';
 
   if (!releConfig || !currentStatus) {
-    t.innerHTML = '<tr><td colspan="2">Carregando configurações...</td></tr>';
+    // Melhorar feedback: se não carregar, mostrar que o status não está disponível
+    t.innerHTML = '<tr><td colspan="2">Status indisponível.<br/><small>Verifique o arquivo config_fileiras.json e status.atual.json no servidor.</small></td></tr>';
     return;
   }
 
@@ -205,19 +146,22 @@ const tbl=()=>{
     const avg = sum / data.length;
     const fileiraChar = fileira.slice(-1).toUpperCase();
     
-    // Usar o limite de ativação do primeiro relé para a lógica de risco da tabela
+    // Usa o limite de LIGAR do primeiro relé/sensor como base de risco
     const threshold = config.reles[0].ligar_em;
 
     let classCss = 'baixo';
     let statusText = 'BAIXO';
 
-    // Lógica de Risco baseada no limite de ativação da fileira
-    if (avg < threshold + 2) { 
+    // Lógica de Risco
+    if (avg < threshold) { 
       classCss = 'alto';
       statusText = 'ALTO';
-    } else if (avg < threshold + 8) { 
+    } else if (avg < threshold + 8) { // Média entre LIGAR e LIGAR+8%
       classCss = 'medio';
       statusText = 'MÉDIO';
+    } else {
+        classCss = 'baixo';
+        statusText = 'BAIXO';
     }
 
     return `<tr><td>Fileira ${fileiraChar}</td><td class="${classCss}">${statusText} (${avg.toFixed(1)}%)</td></tr>`;
@@ -248,7 +192,7 @@ const map=()=>{
                   const umidade = sensor.umid;
                   
                   // Intensidade (inverso do risco): quanto menor a umidade, maior o peso (vermelho)
-                  let intensity = 1 - Math.min(1, Math.max(0, (umidade - threshold) / threshold));
+                  let intensity = 1 - Math.min(1, Math.max(0, (umidade - threshold) / 10)); // Dividido por 10 para suavizar o gradiente
                   if (umidade < threshold) intensity = 1; // Tudo abaixo do limite é 1.0 (vermelho)
                   
                   h.push([sensor.lat, sensor.lon, intensity]);
@@ -282,11 +226,11 @@ const map=()=>{
           
           let rangeText;
           if (i === 0) { 
-              rangeText = `Umidade &lt; ${grades[1].toFixed(1)}% (IRRIGAR)`;
+              rangeText = `Umidade < ${grades[1].toFixed(1)}% (IRRIGAR)`;
           } else if (i === 1) { 
               rangeText = `${grades[1].toFixed(1)}% a ${grades[2].toFixed(1)}%`;
           } else { 
-              rangeText = `Umidade &gt; ${grades[2].toFixed(1)}%`;
+              rangeText = `Umidade > ${grades[2].toFixed(1)}%`;
           }
 
           div.innerHTML +=
@@ -312,15 +256,22 @@ const alertas=()=>{
 
   const secos=[];
   
+  // Verifica se a configuração foi carregada antes de prosseguir
+  if (!releConfig || !currentStatus) {
+    div.textContent='⚠️ Dados de Status/Configuração ausentes.';
+    div.style.background='#f0ad4e';
+    return;
+  }
+
   files.forEach(fileira=>{
     const data = currentStatus[fileira];
     const config = releConfig.fileiras[fileira];
     
     if (data && config && config.reles && config.reles.length > 0) {
-        // Encontra a menor umidade de ativação entre os relés desta fileira
+        // Encontra a menor umidade de ativação (o limite mais baixo para o qual o sistema deve ligar)
         const minThreshold = Math.min(...config.reles.map(r => r.ligar_em));
         
-        // Verifica se algum sensor está abaixo do limite mínimo de ativação
+        // Calcula a média da umidade da fileira (simplificação, idealmente, veria o pior sensor)
         const avg = data.reduce((acc, sensor) => acc + sensor.umid, 0) / data.length;
 
         if(avg < minThreshold){
