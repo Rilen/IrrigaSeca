@@ -15,24 +15,19 @@
   .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
   .menu div{width:100%;max-width:300px}
   
-  /* Estilos para o novo grupo de rótulos de fileira */
-  .chk-group{
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-    padding-top: 5px;
-  }
-
-  .chk-group label{
-    display:inline-block; 
-    cursor:pointer;
+  /* Estilos para os rótulos de fileira (agora usando .filter-label) */
+  .filter-label {
+    display: block; 
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+    max-width: 300px;
   }
   
   /* Estilo que simula o desativado (riscado e cinza) */
-  .chk-group label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
+  .filter-label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
   /* Estilo que simula o ativado (negrito) */
-  .chk-group label[data-checked="true"] {font-weight:bold;text-decoration:none;}
+  .filter-label[data-checked="true"] {font-weight:bold;text-decoration:none;}
   
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
   #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
@@ -49,12 +44,9 @@
     #map{height:420px}
     .blc{max-width:45%;display:inline-block;vertical-align:top;text-align:center}
     
-    .chk-group{
-        display: flex;
-        flex-direction: row; 
-        gap: 15px;
+    .filter-label {
+        width: auto;
         max-width: none;
-        padding-top: 0;
     }
   }
 </style>
@@ -77,12 +69,11 @@
       <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
-    <!--<div class="chk-group">
-      <label id="fA" data-fileira="fileiraA" data-checked="true">Fileira A</label>
-      <label id="fB" data-fileira="fileiraB" data-checked="true">Fileira B</label>
-      <label id="fC" data-fileira="fileiraC" data-checked="true">Fileira C</label>
-      <label id="fD" data-fileira="fileiraD" data-checked="true">Fileira D</label>
-    </div>-->
+    
+    <label class="filter-label" id="fA" data-fileira="fileiraA" data-checked="true">Fileira A</label>
+    <label class="filter-label" id="fB" data-fileira="fileiraB" data-checked="true">Fileira B</label>
+    <label class="filter-label" id="fC" data-fileira="fileiraC" data-checked="true">Fileira C</label>
+    <label class="filter-label" id="fD" data-fileira="fileiraD" data-checked="true">Fileira D</label>
   </div>
   <canvas id="graf"></canvas>
 
@@ -107,7 +98,7 @@ const cache={};
 
 const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
-const chkLabels = document.querySelectorAll('.chk-group label');
+const chkLabels = document.querySelectorAll('.filter-label');
 
 for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
 a.value=2025;
