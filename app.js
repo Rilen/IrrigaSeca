@@ -12,7 +12,6 @@ let releConfig = null; // Agora carrega de config_fileiras.json
 // Geolocation Constants (Atualizado com sua sugestão)
 const LAT_CENTER = -22.098954; 
 const LON_CENTER = -41.783619; 
-
 const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
 
@@ -44,7 +43,8 @@ meses.forEach(mes => {
 // Funções de Carregamento
 function url(f){return `./data/${f}_${m.value}_${a.value}.log`;}
 async function load(f){
-  const u=url(f); if(cache[u])return cache[u];
+  const u=url(f); 
+  if(cache[u])return cache[u];
   try{
     // Acessando os arquivos de log que você forneceu
     const logMap = {
@@ -58,10 +58,11 @@ async function load(f){
     // No ambiente real, você faria um `fetch(u)` como está comentado abaixo:
     /*
     const r=await fetch(u);
-    if(!r.ok)return {l:[],d:[]};
+    if(!r.ok) return {l:[], d:[]}; 
+	
     const t=await r.text();
     */
-
+    // Processamento do log:
     // SIMULAÇÃO: No ambiente de execução do assistente, usamos os dados carregados:
     let logContent = '';
     const filename = `${f}_${m.value}_${a.value}.log`;
@@ -87,12 +88,14 @@ async function load(f){
 
     if (!logContent) return {l:[], d:[]};
 
-    const linhas = logContent.trim().split('\n');
+    const linhas = t.trim().split('\n');
     const l=[],d=[];
     linhas.forEach(x=>{const v=x.split(';');if(v[0].startsWith('202')){l.push(v[0]);d.push(+v[1]);}});
     return cache[u]={l,d};
-
-  }catch(e){return {l:[],d:[]};}
+  }catch(e){
+      console.error("Erro ao carregar log:", u, e);
+      return {l:[],d:[]};
+  }
 }
 
 async function loadJSON(filepath) {
