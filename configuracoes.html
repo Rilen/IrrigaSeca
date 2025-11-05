@@ -1,136 +1,146 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurações - IrrigaSeca</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; margin-bottom: 30px; }
-        .config-group { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
-        .config-group h3 { margin-top: 0; color: #007bff; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .input-pair { display: flex; gap: 20px; margin-bottom: 15px; }
-        .input-pair > div { flex: 1; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #5cb85c; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 20px; }
-        button:hover { background-color: #4cae4c; }
+        /* Adicionando CSS para botões de controle manual */
+        .manual-control { margin-bottom: 30px; padding: 20px; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 6px; }
+        .manual-control h3 { color: #e65100; border-bottom: none; }
+        .rele-buttons { display: flex; flex-wrap: wrap; gap: 15px; }
+        .rele-buttons button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; flex: 1 1 180px; }
+        .btn-on { background-color: #d9534f; color: white; }
+        .btn-off { background-color: #5cb85c; color: white; }
+        .btn-on:hover { background-color: #c9302c; }
+        .btn-off:hover { background-color: #4cae4c; }
+        /* ... (Restante do CSS) ... */
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Painel de Configurações de Irrigação</h2>
+        <h2>Painel de Configurações</h2>
 
+        <div class="manual-control">
+            <h3>Controle Manual dos Relés (Override)</h3>
+            <p>O controle manual sobrepõe a lógica automática até a próxima reinicialização ou intervenção do firmware.</p>
+            <div class="rele-buttons">
+                <button class="btn-on" onclick="controlRele('A', 'ON')">Fileira A - LIGAR</button>
+                <button class="btn-off" onclick="controlRele('A', 'OFF')">Fileira A - DESLIGAR</button>
+                
+                <button class="btn-on" onclick="controlRele('B', 'ON')">Fileira B - LIGAR</button>
+                <button class="btn-off" onclick="controlRele('B', 'OFF')">Fileira B - DESLIGAR</button>
+
+                <button class="btn-on" onclick="controlRele('C', 'ON')">Fileira C - LIGAR</button>
+                <button class="btn-off" onclick="controlRele('C', 'OFF')">Fileira C - DESLIGAR</button>
+
+                <button class="btn-on" onclick="controlRele('D', 'ON')">Fileira D - LIGAR</button>
+                <button class="btn-off" onclick="controlRele('D', 'OFF')">Fileira D - DESLIGAR</button>
+            </div>
+        </div>
+        
         <form id="config-form">
-            
             <div class="config-group">
-                <h3>Global/Padrão</h3>
+                <h3>Configuração por Fileira (Fileira A - Argiloso)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="default-ativacao">Umidade de Ativação Padrão (%)</label>
-                        <input type="number" id="default-ativacao" value="18" min="10" max="40" step="1">
+                        <label for="fileiraA-ligar">PMP (Ligar em %)</label>
+                        <input type="number" id="fileiraA-ligar" name="fileiraA-ligar" value="15" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="default-desativacao">Umidade de Desativação Padrão (%)</label>
-                        <input type="number" id="default-desativacao" value="25" min="20" max="80" step="1">
+                        <label for="fileiraA-desligar">CC (Desligar em %)</label>
+                        <input type="number" id="fileiraA-desligar" name="fileiraA-desligar" value="40" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Lógica de Horário e Emergência (Global)</h3>
+                <h3>Configuração por Fileira (Fileira B - Arenoso)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="hora-inicio-noturna">Início Irrigação Noturna (Hora 24h)</label>
-                        <input type="number" id="hora-inicio-noturna" value="1" min="0" max="23" step="1">
+                        <label for="fileiraB-ligar">PMP (Ligar em %)</label>
+                        <input type="number" id="fileiraB-ligar" name="fileiraB-ligar" value="15" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="hora-fim-noturna">Fim Irrigação Noturna (Hora 24h)</label>
-                        <input type="number" id="hora-fim-noturna" value="5" min="0" max="23" step="1">
-                    </div>
-                </div>
-                <div>
-                    <label for="umidade-emergencia">Umidade de Emergência (%)</label>
-                    <p style="font-size: small; margin-top: 0;">Ligar a qualquer hora do dia se cair abaixo deste valor (Ex: 10%).</p>
-                    <input type="number" id="umidade-emergencia" value="10" min="1" max="15" step="1">
-                </div>
-            </div>
-            <div class="config-group">
-                <h3>Fileira A (Ex: Solo Argiloso - CC: 40%)</h3>
-                <p>Configurações para o sensor de **pior cenário** da Fileira A.</p>
-                <div class="input-pair">
-                    <div>
-                        <label for="fileiraA-ligar">Ligar Irrigação (PMP, %)</label>
-                        <input type="number" id="fileiraA-ligar" value="15" min="10" max="60" step="1">
-                    </div>
-                    <div>
-                        <label for="fileiraA-desligar">Desligar Irrigação (CC, %)</label>
-                        <input type="number" id="fileiraA-desligar" value="40" min="20" max="80" step="1">
+                        <label for="fileiraB-desligar">CC (Desligar em %)</label>
+                        <input type="number" id="fileiraB-desligar" name="fileiraB-desligar" value="30" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
 
             <div class="config-group">
-                <h3>Fileira B (Ex: Solo Arenoso - CC: 30%)</h3>
-                <p>Configurações para o sensor de **pior cenário** da Fileira B.</p>
+                <h3>Configuração por Fileira (Fileira C - Média)</h3>
                 <div class="input-pair">
                     <div>
-                        <label for="fileiraB-ligar">Ligar Irrigação (PMP, %)</label>
-                        <input type="number" id="fileiraB-ligar" value="15" min="10" max="60" step="1">
+                        <label for="fileiraC-ligar">PMP (Ligar em %)</label>
+                        <input type="number" id="fileiraC-ligar" name="fileiraC-ligar" value="16" min="0" max="100" step="0.5" required>
                     </div>
                     <div>
-                        <label for="fileiraB-desligar">Desligar Irrigação (CC, %)</label>
-                        <input type="number" id="fileiraB-desligar" value="30" min="20" max="80" step="1">
+                        <label for="fileiraC-desligar">CC (Desligar em %)</label>
+                        <input type="number" id="fileiraC-desligar" name="fileiraC-desligar" value="32" min="0" max="100" step="0.5" required>
                     </div>
                 </div>
             </div>
-            
-            <button type="submit">Salvar e Enviar para ESP32 (Simulado)</button>
-            <a href="index.html" style="display: block; text-align: center; margin-top: 15px; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
+
+            <div class="config-group">
+                <h3>Configuração por Fileira (Fileira D - Arenoso Fino)</h3>
+                <div class="input-pair">
+                    <div>
+                        <label for="fileiraD-ligar">PMP (Ligar em %)</label>
+                        <input type="number" id="fileiraD-ligar" name="fileiraD-ligar" value="17" min="0" max="100" step="0.5" required>
+                    </div>
+                    <div>
+                        <label for="fileiraD-desligar">CC (Desligar em %)</label>
+                        <input type="number" id="fileiraD-desligar" name="fileiraD-desligar" value="28" min="0" max="100" step="0.5" required>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Salvar Configurações (Lógica Automática)</button>
+            <a href="index.html" style="display: block; margin-top: 15px; text-align: center; color: #007bff; text-decoration: none;">Voltar para Dashboard</a>
         </form>
 
-        <p style="margin-top: 30px; text-align: center; color: #555;">*A ação simula a chamada POST para o controlador com a lógica de horário e emergência.</p>
-    </div>
+        </div>
 
     <script>
-        document.getElementById('config-form').addEventListener('submit', async function(e) {
+        // Função para simular o controle manual
+        function controlRele(fileira, estado) {
+            alert(`COMANDO ENVIADO: Fileira ${fileira} - ${estado}. (Isso enviaria uma chamada API para o ESP32)`);
+            console.log(`Manual Override: Rele ${fileira} set to ${estado}`);
+            // No projeto real, faria um fetch/POST para um endpoint como /api/rele/A?action=ON
+        }
+
+        // Função para salvar as configurações automáticas (AGORA COM C e D)
+        document.getElementById('config-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const form = e.target;
-            
-            // 1. Coleta os dados do formulário
             const configs = {
                 "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
                 "default_desativacao": parseFloat(form.elements['default-desativacao'].value),
-                // NOVOS PARÂMETROS DE HORÁRIO/EMERGÊNCIA
-                "hora_inicio_noturna": parseInt(form.elements['hora-inicio-noturna'].value, 10),
-                "hora_fim_noturna": parseInt(form.elements['hora-fim-noturna'].value, 10),
+                "hora_inicio_noturna": parseFloat(form.elements['hora-inicio-noturna'].value),
+                "hora_fim_noturna": parseFloat(form.elements['hora-fim-noturna'].value),
                 "umidade_emergencia": parseFloat(form.elements['umidade-emergencia'].value),
-                // FIM NOVOS PARÂMETROS
                 "fileiras": {
-                    "fileiraA": { 
-                        "reles": [{ 
-                            "id": "sensor_principal", 
-                            "ligar_em": parseFloat(form.elements['fileiraA-ligar'].value), 
-                            "desligar_em": parseFloat(form.elements['fileiraA-desligar'].value) 
-                        }] 
-                    },
-                    "fileiraB": { 
-                        "reles": [{ 
-                            "id": "sensor_principal", 
-                            "ligar_em": parseFloat(form.elements['fileiraB-ligar'].value), 
-                            "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) 
-                        }] 
-                    }
+                    "fileiraA": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraA-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraA-desligar'].value) }] },
+                    "fileiraB": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraB-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraB-desligar'].value) }] },
+                    "fileiraC": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraC-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraC-desligar'].value) }] },
+                    "fileiraD": { "reles": [{ "id": "sensor_principal", "ligar_em": parseFloat(form.elements['fileiraD-ligar'].value), "desligar_em": parseFloat(form.elements['fileiraD-desligar'].value) }] }
                 }
             };
             
-            console.log('Novas Configurações Prontas para Envio:', configs);
-
-            // 2. Simulação da Chamada POST (Enviando para o ESP32/Servidor)
-            alert('✅ Configurações salvas e enviadas com sucesso (Simulado)! O ESP32 agora tem a lógica de irrigação noturna e emergencial.');
-            
+            console.log('Novas Configurações Salvas (Lógica Automática):', configs);
+            alert('Configurações salvas (mock). O ESP32 seria atualizado via API.');
+            // No projeto real, faria um fetch/POST para o endpoint de configuração
         });
+        
+        // Função para carregar valores default (para simulação)
+        document.addEventListener('DOMContentLoaded', () => {
+             // Mock de carregamento dos valores globais se existissem
+             document.getElementById('default-ativacao').value = 18;
+             document.getElementById('default-desativacao').value = 25;
+             document.getElementById('hora-inicio-noturna').value = 1;
+             document.getElementById('hora-fim-noturna').value = 5;
+             document.getElementById('umidade-emergencia').value = 10;
+        });
+
     </script>
 </body>
 </html>
