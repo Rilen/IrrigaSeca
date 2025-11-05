@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IrrigaSeca</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
@@ -31,7 +32,7 @@
   .tbl td:last-child{text-align:right;font-weight:bold}
   .alto{color:#d9534f}.medio{color:#f0ad4e}.baixo{color:#5cb85c}
   #map{height:320px;width:90vw;max-width:900px;margin:15px auto;border-radius:12px;border:1px solid #ccc}
-  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
+  @keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-20px)}}
   @media(min-width:768px){
     .menu{flex-direction:row;justify-content:center;flex-wrap:wrap}
     canvas#graf{height:450px}
@@ -55,7 +56,8 @@
     <div><label>Período:<select id="p">
       <option value="24h">24h</option><option value="7d">7d</option>
       <option value="15d">15d</option><option value="30d">30d</option>
-      <option value="60d">60d</option><option value="90d">90d</option>
+      <option value="60d">60d</option>
+      <option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
     <div class="chk">
@@ -70,7 +72,7 @@
   <div id="pred">
     <h2>Análise Preditiva</h2>
     <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">
-      <div class="blc"><h3>Próximas 12h</h3>
+      <div class="blc"><h3>Próximas 48h</h3>
         <table class="tbl" id="tbl"></table>
       </div>
       <div class="blc"><h3>Mapa de Calor</h3>
@@ -81,14 +83,14 @@
 </div>
 
 <script>
-// Substitua TODO o <script> por este:
 const files=["fileiraA","fileiraB","fileiraC","fileiraD"];
 const cores=['#00f','#f00','#0f0','#fa0'];
 const MAX=500;
-let chart=null, trend=null, linha=null, mapa=null, th=0;
+let chart=null,trend=null,linha=null,mapa=null,th=0;
 const cache={};
 
-const els={a:document.getElementById('a'),m:document.getElementById('m'),p:document.getElementById('p'),ctx:document.getElementById('graf').getContext('2d'),chks:document.querySelectorAll('.chk input')};
+const els={a:document.getElementById('a'),m:document.getElementById('m'),p:document.getElementById('p'),
+           ctx:document.getElementById('graf').getContext('2d'),chks:document.querySelectorAll('.chk input')};
 
 for(let y=2022;y<=2027;y++){const o=document.createElement('option');o.value=o.text=y;els.a.appendChild(o);}
 els.a.value=2025;
@@ -96,8 +98,7 @@ els.a.value=2025;
 const url=f=>`./data/${f}_${els.m.value}_${els.a.value}.log`;
 
 const load=async f=>{
-  const u=url(f);
-  if(cache[u])return cache[u];
+  const u=url(f); if(cache[u])return cache[u];
   try{
     const r=await fetch(u);
     if(!r.ok)return {l:[],d:[]};
@@ -134,12 +135,11 @@ const upd=()=>{
     chart?.destroy();
     chart=new Chart(els.ctx,{type:'line',data:{labels:L,datasets:DS},options:{
       responsive:true,maintainAspectRatio:true,animation:false,
-      plugins:{legend:{display:true}},
+      plugins:{legend:{display:true},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},
       scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}},y:{min:0,max:100,title:{display:true,text:'%'}}}
     }});
 
-    tbl(); mapa&&mapa.remove(); map(); trend&&trend.destroy(); linha&&linha.destroy(); makeTrend(); makeLinha(); alertas();
-    th=0;
+    tbl(); mapa&&mapa.remove(); map(); trend&&trend.destroy(); linha&&linha.destroy(); makeTrend(); makeLinha(); alertas(); th=0;
   },10);
 };
 
@@ -151,16 +151,20 @@ const tbl=()=>{
 };
 
 const map=()=>{
-  mapa=L.map('map').setView([-23.55,-46.63],15);
+  mapa=L.map('map',{zoomControl:false}).setView([-23.55,-46.63],15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-  L.heatLayer([[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]],{radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
+  L.heatLayer([[-23.548,-46.635,0.2],[-23.549,-46.630,0.2],[-23.552,-46.632,1],[-23.551,-46.637,0.6]],
+    {radius:25,blur:15,gradient:{0.2:'green',0.6:'yellow',1:'red'}}).addTo(mapa);
+  setTimeout(()=>mapa.invalidateSize(),150);
 };
 
 const makeTrend=()=>{
   let c=document.getElementById('trend');
   if(!c){c=document.createElement('canvas');c.id='trend';c.height=180;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
   const vals=files.map(f=>{const d=cache[url(f)];return d?d.d.slice(-24).reduce((a,b)=>a+b,0)/24:50;});
-  trend=new Chart(c.getContext('2d'),{type:'bar',data:{labels:['A','B','C','D'],datasets:[{label:'Tendência 24h',data:vals,backgroundColor:vals.map(v=>v<18?'#d9534f':v<30?'#f0ad4e':'#5cb85c')}]},options:{animation:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100}}}});
+  trend=new Chart(c.getContext('2d'),{type:'bar',data:{labels:['A','B','C','D'],datasets:[{label:'Tendência 24h',data:vals,backgroundColor:vals.map(v=>v<18?'#d9534f':v<30?'#f0ad4e':'#5cb85c')}]},options:{
+    animation:false,plugins:{legend:{display:false},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},scales:{y:{min:0,max:100}}
+  }});
 };
 
 const makeLinha=()=>{
@@ -168,7 +172,9 @@ const makeLinha=()=>{
   if(!c){c=document.createElement('canvas');c.id='linha';c.height=200;c.style='width:90vw;max-width:900px;margin:20px auto;display:block';document.querySelector('#pred > div').appendChild(c);}
   const labels=[], sets=[[], [], [], []];
   files.forEach((f,i)=>{const d=cache[url(f)];if(d){d.l.slice(-48).forEach(t=>labels.push(t.slice(11,16)));d.d.slice(-48).forEach(v=>sets[i].push(v));}});
-  linha=new Chart(c.getContext('2d'),{type:'line',data:{labels,datasets:files.map((f,i)=>({label:f.slice(-1),data:sets[i],borderColor:cores[i]}))},options:{animation:false,plugins:{legend:{position:'top'}},scales:{y:{min:0,max:100}}}});
+  linha=new Chart(c.getContext('2d'),{type:'line',data:{labels,datasets:files.map((f,i)=>({label:f.slice(-1),data:sets[i],borderColor:cores[i]}))},options:{
+    animation:false,plugins:{legend:{position:'top'},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'xy'}}},scales:{y:{min:0,max:100}}
+  }});
 };
 
 const alertas=()=>{
@@ -183,8 +189,6 @@ const alertas=()=>{
   div.textContent=secos.length?`⚠️ IRRIGUE: ${secos.map(x=>x.f).join(', ')} (${secos[0].v.toFixed(1)}%)`:'✅ Umidade OK';
   div.style.background=secos.length?'#d9534f':'#5cb85c';
 };
-
-document.head.insertAdjacentHTML('beforeend','<style>@keyframes fade{0%{opacity:0;transform:translate(-50%,20px)}20%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-20px)}}</style>');
 
 [els.a,els.m,els.p,...els.chks].forEach(el=>el.onclick=upd);
 upd();
