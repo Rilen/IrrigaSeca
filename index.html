@@ -15,13 +15,24 @@
   .menu{display:flex;flex-direction:column;gap:15px;align-items:center}
   .menu div{width:100%;max-width:300px}
   
-  /* Estilos para os rótulos de fileira (agora simplificados) */
-  .chk label{display:flex;align-items:center;gap:8px;cursor:pointer}
+  /* Estilos para o novo grupo de rótulos de fileira */
+  .chk-group{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    padding-top: 5px;
+  }
+
+  .chk-group label{
+    display:inline-block; 
+    cursor:pointer;
+  }
   
   /* Estilo que simula o desativado (riscado e cinza) */
-  .chk label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
+  .chk-group label[data-checked="false"] {text-decoration:line-through;color:#aaa;font-weight:normal;}
   /* Estilo que simula o ativado (negrito) */
-  .chk label[data-checked="true"] {font-weight:bold;text-decoration:none;}
+  .chk-group label[data-checked="true"] {font-weight:bold;text-decoration:none;}
   
   canvas#graf{background:#fff;border-radius:8px;box-shadow:0 2px 8px #0002;height:280px;width:100%}
   #pred{margin-top:30px;padding-top:20px;border-top:2px solid #eee}
@@ -37,6 +48,14 @@
     canvas#graf{height:450px}
     #map{height:420px}
     .blc{max-width:45%;display:inline-block;vertical-align:top;text-align:center}
+    
+    .chk-group{
+        display: flex;
+        flex-direction: row; 
+        gap: 15px;
+        max-width: none;
+        padding-top: 0;
+    }
   }
 </style>
 </head>
@@ -58,7 +77,7 @@
       <option value="60d">60d</option><option value="90d">90d</option>
       <option value="all" selected>Tudo</option>
     </select></label></div>
-    <div class="chk">
+    <div class="chk-group">
       <label id="fA" data-fileira="fileiraA" data-checked="true">Fileira A</label>
       <label id="fB" data-fileira="fileiraB" data-checked="true">Fileira B</label>
       <label id="fC" data-fileira="fileiraC" data-checked="true">Fileira C</label>
@@ -88,7 +107,7 @@ const cache={};
 
 const a=document.getElementById('a'),m=document.getElementById('m'),p=document.getElementById('p');
 const ctx=document.getElementById('graf').getContext('2d');
-const chkLabels = document.querySelectorAll('.chk label');
+const chkLabels = document.querySelectorAll('.chk-group label');
 
 for(let y=2022;y<=2027;y++){let o=document.createElement('option');o.value=y;o.text=y;a.appendChild(o);}
 a.value=2025;
@@ -188,7 +207,7 @@ const alertas=()=>{
   }
 };
 
-// Event handler simplificado
+// Event handler para toggling
 chkLabels.forEach(label => {
     label.onclick = () => {
         const isChecked = label.getAttribute('data-checked') === 'true';
