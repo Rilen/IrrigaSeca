@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IrrigaSeca 1.13</title>
+<title>IrrigaSeca 1.14</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.1"></script> 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -11,7 +11,8 @@
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <link rel="stylesheet" href="style.css"> 
 </head>
-<body><div id="c">
+<body>
+<div id="c">
   <h2>Gráfico de Umidade - IrrigaSeca</h2>
   
   <div class="menu">
@@ -48,26 +49,22 @@
       </div>
     </div>
   </div>
-  <div id="pred">
-    <h2>Análise Preditiva e Previsão de Seca</h2>
-    
-    </div>
 
   <div id="telemetry">
     <h2>Telemetria em Tempo Real (Fileira B - Detalhada)</h2>
     <div class="blc">
       <table class="tbl" id="tbl-telemetria">
+        <!-- Colunas de Cabeçalho definidas no HTML para consistência -->
         <tr>
           <th>Sensor ID</th>
           <th>Umidade (%)</th>
-          <th>Decisão do Relé</th>
-          <th>Umidade Crítica da Fileira</th>
+          <th>Status</th>
+          <th>Umid. Crítica (Pior Sensor)</th>
         </tr>
         <tr><td colspan="4">Carregando dados individuais...</td></tr>
       </table>
     </div>
   </div>
-</div>
 </div>
 
 <div class="fixed-footer">

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>IS Conf 1.3</title>
-	<title>Configurações - IrrigaSeca</title>
+	<title>IS Conf 1.2</title>
+    <title>Configurações - IrrigaSeca</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -42,7 +42,7 @@
         }
         .input-pair { 
             display: flex; 
-            flex-direction: column; 
+            flex-direction: column; /* Padrão mobile: Empilhado */
             gap: 15px; 
             margin-bottom: 15px; 
         }
@@ -62,7 +62,7 @@
             box-sizing: border-box; 
         }
         
-        /* Controles Manuais (Override) */
+        /* Controles Manuais (NOVO ESTILO) */
         .manual-control { 
             margin-bottom: 30px; 
             padding: 20px; 
@@ -76,27 +76,23 @@
             margin-bottom: 15px;
             padding-bottom: 8px;
         }
-        .rele-buttons-group { 
+        .rele-buttons { 
             display: flex; 
             flex-wrap: wrap; 
             gap: 10px; 
-            justify-content: space-between;
-            margin-bottom: 10px;
+            justify-content: center;
         }
-        .rele-buttons-group:last-child {
-            margin-bottom: 0;
-        }
-        .rele-buttons-group button { 
+        .rele-buttons button { 
             padding: 8px 15px; 
             border: none; 
             border-radius: 4px; 
             cursor: pointer; 
             font-weight: bold; 
             transition: background-color 0.2s; 
-            flex: 1 1 calc(50% - 15px); /* Dois botões por linha no mobile */
+            flex: 1 1 120px; /* Garante que os botões se ajustem */
         }
-        .btn-on { background-color: #d9534f; color: white; }
-        .btn-off { background-color: #5cb85c; color: white; }
+        .btn-on { background-color: #d9534f; color: white; } /* Vermelho para LIGAR */
+        .btn-off { background-color: #5cb85c; color: white; } /* Verde para DESLIGAR */
         .btn-on:hover { background-color: #c9302c; }
         .btn-off:hover { background-color: #4cae4c; }
 
@@ -117,10 +113,7 @@
         /* Adaptação para Desktop */
         @media (min-width: 600px) {
             .input-pair {
-                flex-direction: row; 
-            }
-            .rele-buttons-group button {
-                flex: 1 1 120px; /* Mais botões por linha no desktop */
+                flex-direction: row; /* Layout lado a lado */
             }
         }
     </style>
@@ -132,16 +125,18 @@
         <div class="manual-control">
             <h3>Controle Manual dos Relés (Override)</h3>
             <p style="font-size: small; color: #666; margin-bottom: 15px;">O controle manual sobrepõe a lógica automática até a próxima intervenção do sistema.</p>
-            
-            <div class="rele-buttons-group">
+            <div class="rele-buttons">
                 <button class="btn-on" onclick="controlRele('A', 'ON')">Fileira A - LIGAR</button>
                 <button class="btn-off" onclick="controlRele('A', 'OFF')">Fileira A - DESLIGAR</button>
+                
                 <button class="btn-on" onclick="controlRele('B', 'ON')">Fileira B - LIGAR</button>
                 <button class="btn-off" onclick="controlRele('B', 'OFF')">Fileira B - DESLIGAR</button>
-            </div>
-            <div class="rele-buttons-group">
+			</div>
+			<br/>
+			<div class="rele-buttons">
                 <button class="btn-on" onclick="controlRele('C', 'ON')">Fileira C - LIGAR</button>
                 <button class="btn-off" onclick="controlRele('C', 'OFF')">Fileira C - DESLIGAR</button>
+
                 <button class="btn-on" onclick="controlRele('D', 'ON')">Fileira D - LIGAR</button>
                 <button class="btn-off" onclick="controlRele('D', 'OFF')">Fileira D - DESLIGAR</button>
             </div>
@@ -166,12 +161,10 @@
                         <label for="umidade-emergencia">Umidade de Emergência (PPM %)</label>
                         <input type="number" id="umidade-emergencia" name="umidade-emergencia" value="10" min="1" max="15" step="1">
                     </div>
-                    <!-- Campo Vazio para alinhar -->
                     <div></div>
                 </div>
             </div>
 
-            <!-- CONFIGURAÇÕES POR FILEIRA -->
             <div class="config-group">
                 <h3>Fileira A (Solo Argiloso: CC 40%)</h3>
                 <p style="font-size: small;">Define o Ponto de Murcha (Ligar) e Capacidade de Campo (Desligar).</p>
@@ -247,10 +240,10 @@
             e.preventDefault();
             const form = e.target;
             
-            // Refatoração: Adicionado tratamento para o campo default-ativacao que está ausente no form
-            
             // Reconstroi o objeto configs a partir dos campos do formulário
             const configs = {
+                "default_ativacao": parseFloat(form.elements['default-ativacao'].value),
+                "default_desativacao": parseFloat(form.elements['default-desligar'].value),
                 "hora_inicio_noturna": parseFloat(form.elements['hora-inicio-noturna'].value),
                 "hora_fim_noturna": parseFloat(form.elements['hora-fim-noturna'].value),
                 "umidade_emergencia": parseFloat(form.elements['umidade-emergencia'].value),
@@ -269,12 +262,16 @@
         
         // Função para carregar valores default (para simulação)
         document.addEventListener('DOMContentLoaded', () => {
-             // Apenas preenche os campos que existem no HTML
+             // Carrega valores globais
+             document.getElementById('default-ativacao').value = 18;
+             document.getElementById('default-desativacao').value = 25;
              document.getElementById('hora-inicio-noturna').value = 1;
              document.getElementById('hora-fim-noturna').value = 5;
              document.getElementById('umidade-emergencia').value = 10;
+
              // Carrega valores das fileiras (já setados no HTML, mas aqui seria o ponto de leitura da API)
         });
+
     </script>
 </body>
 </html>
