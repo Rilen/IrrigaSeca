@@ -241,11 +241,16 @@ const upd=()=>{
             scales:{x:{ticks:{maxTicksLimit:12,stepSize:step}}, y:{min:0,max:100,title:{display:true,text:'Umidade (%)'}}}
         }
     });
+    
     tbl();
     map();
     loadForecast(); 
     alertas();
-    loadTelemetryTable('fileiraB'); 
+    
+    // Obtém a fileira selecionada ou usa B como padrão
+    const selectedFileira = document.getElementById('telemetry-fileira-select').value || 'fileiraB';
+    loadTelemetryTable(selectedFileira); // Chamada dinâmica
+    
     th=0;
   },10);
 };
@@ -303,7 +308,7 @@ const tbl=()=>{
 let mapa=null;
 const map=()=>{
   // Nota: O mapa usa um mock simples aqui, o ideal seria usar a umidade crítica do pior sensor.
-  const threshold = releConfig ? 18 : 20; // Hardcoding para consistência visual no mock
+  const threshold = releConfig ? 15 : 20; // Usando o PMP 15 como limite visual crítico
   const h = []; 
 
   if (mapa) mapa.remove();
@@ -338,7 +343,7 @@ const map=()=>{
 
   legend.onAdd = function (map) {
       const div = L.DomUtil.create('div', 'l-control l-control-custom');
-      // Usando o PMP do mock para definir o limite
+      // Usando o PMP do mock (15) para definir o limite
       const thresholdLimit = releConfig ? 15 : 20; 
       const grades = [0, thresholdLimit, thresholdLimit + 8]; 
       const labels = ['Umidade Crítica', 'Umidade Média', 'Umidade Alta'];
@@ -471,7 +476,9 @@ const loadTelemetryTable = (fileira) => {
     let html = '';
 
     if (!releConfig || !currentStatus || !currentStatus[fileira]) {
-        table.innerHTML = `<tr><td colspan="4">Dados de telemetria ${fileira} indisponíveis.</td></tr>`;
+        // Altera o conteúdo do <tbody> diretamente, caso exista
+        const tbody = table.querySelector('tbody') || table; 
+        tbody.innerHTML = `<tr><td colspan="4">Dados de telemetria ${fileira.slice(-1).toUpperCase()} indisponíveis.</td></tr>`;
         return;
     }
 
@@ -528,9 +535,9 @@ const loadTelemetryTable = (fileira) => {
         </tr>
     `;
 
-    // Remove o cabeçalho antigo e insere o novo conteúdo
+    // Insere o novo conteúdo na tabela
     // Note: Mantendo <thead> e <tbody> para semântica. 
-    table.querySelector('tbody') ? table.querySelector('tbody').innerHTML = html : table.innerHTML += `<tbody>${html}</tbody>`;
+    table.querySelector('tbody').innerHTML = html;
 };
 
 // Event handlers simplificados para os selects (ano, mês, período)

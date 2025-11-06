@@ -78,18 +78,16 @@ async function load(f){
 async function loadJSON(filepath) {
     if (cache[filepath]) return cache[filepath];
     try {
-        // MOCKS para fins de lógica e visualização em desenvolvimento
+        // Mock de configuração e status para fins de desenvolvimento
         if (filepath === './config_fileiras.json') {
              return {
-              "default_ativacao": 18,
-              "default_desativacao": 25,
               "hora_inicio_noturna": 1, 
               "hora_fim_noturna": 5,    
               "umidade_emergencia": 10,
               "fileiras": {
                 "fileiraA": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 40}] }, // Argiloso (CC: 40)
                 "fileiraB": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] }, // Arenoso (CC: 30)
-                "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 15, "desligar_em": 30}] }, 
+                "fileiraC": { "reles": [{"id": "sensor_principal", "ligar_em": 16, "desligar_em": 32}] }, 
                 "fileiraD": { "reles": [{"id": "sensor_principal", "ligar_em": 17, "desligar_em": 28}] }
               }
             };
@@ -304,7 +302,8 @@ const tbl=()=>{
 
 let mapa=null;
 const map=()=>{
-  const threshold = releConfig ? releConfig.default_ativacao : 20;
+  // Nota: O mapa usa um mock simples aqui, o ideal seria usar a umidade crítica do pior sensor.
+  const threshold = releConfig ? 18 : 20; // Hardcoding para consistência visual no mock
   const h = []; 
 
   if (mapa) mapa.remove();
@@ -339,7 +338,8 @@ const map=()=>{
 
   legend.onAdd = function (map) {
       const div = L.DomUtil.create('div', 'l-control l-control-custom');
-      const thresholdLimit = releConfig ? releConfig.default_ativacao : 20;
+      // Usando o PMP do mock para definir o limite
+      const thresholdLimit = releConfig ? 15 : 20; 
       const grades = [0, thresholdLimit, thresholdLimit + 8]; 
       const labels = ['Umidade Crítica', 'Umidade Média', 'Umidade Alta'];
       const colors = ['red', 'yellow', 'green']; 
@@ -391,7 +391,6 @@ const alertas=()=>{
   files.forEach(fileira=>{
     const data = currentStatus[fileira];
     const config = releConfig.fileiras[fileira];
-    const umidade_emergencia = releConfig.umidade_emergencia;
     
     if (data && config && config.reles && config.reles.length > 0) {
         // Encontra a menor umidade (pior cenário)
@@ -506,13 +505,16 @@ const loadTelemetryTable = (fileira) => {
         const isCritical = sensor.umid < config.ligar_em;
         const isEmergency = sensor.umid < globalConfig.umidade_emergencia;
         const sensorClass = isEmergency ? 'alto' : isCritical ? 'medio' : 'baixo';
+        // Ajuste para garantir que a coluna de umidade crítica só apareça na primeira linha
+        const criticalCell = (index === 0) ? `<td style="font-weight: bold;">${umidade_minima.toFixed(1)}%</td>` : `<td style="font-weight: normal;">-</td>`;
+
 
         html += `
             <tr>
                 <td>${sensor.id}</td>
                 <td class="${sensorClass}">${sensor.umid.toFixed(1)}%</td>
                 <td style="text-align: center;">${isEmergency ? 'EMERGÊNCIA' : isCritical ? 'PMP CRÍTICO' : 'OK'}</td>
-                <td style="font-weight: bold;">${index === 0 ? umidade_minima.toFixed(1) + '%' : ''}</td>
+                ${criticalCell}
             </tr>
         `;
     });
@@ -527,7 +529,8 @@ const loadTelemetryTable = (fileira) => {
     `;
 
     // Remove o cabeçalho antigo e insere o novo conteúdo
-    table.querySelector('tbody').innerHTML = html;
+    // Note: Mantendo <thead> e <tbody> para semântica. 
+    table.querySelector('tbody') ? table.querySelector('tbody').innerHTML = html : table.innerHTML += `<tbody>${html}</tbody>`;
 };
 
 // Event handlers simplificados para os selects (ano, mês, período)
